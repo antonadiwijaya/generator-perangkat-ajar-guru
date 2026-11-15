@@ -1,0 +1,1379 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Generator Perangkat Ajar Guru - Pembelajaran Mendalam Kurikulum Merdeka</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Library html2pdf untuk ekspor dokumen langsung ke PDF A4 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
+  <!-- Google Fonts: Inter untuk UI & Merriweather/Plus Jakarta Sans untuk keterbacaan dokumen -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    /* Konfigurasi dasar tipografi */
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f8fafc;
+      color: #0f172a;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    h1, h2, .font-display {
+      font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+    }
+
+    /* Animasi transisi halus antar halaman */
+    .fade-in {
+      animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Styling Kertas Dokumen A4 di Layar */
+    .a4-paper {
+      background: #ffffff;
+      width: 100%;
+      max-width: 210mm;
+      min-height: 297mm;
+      margin: 0 auto;
+      padding: 18mm 18mm;
+      box-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(15, 23, 42, 0.06);
+      color: #111827;
+      font-family: 'Times New Roman', Times, serif;
+      font-size: 11.5pt;
+      line-height: 1.55;
+      border-radius: 6px;
+    }
+
+    @media (max-width: 640px) {
+      .a4-paper {
+        padding: 18px 16px;
+        font-size: 10.5pt;
+      }
+    }
+
+    /* Tipografi khusus di dalam isi dokumen hasil generate */
+    .doc-content h1 {
+      font-family: 'Times New Roman', Times, serif;
+      font-size: 14pt;
+      font-weight: bold;
+      text-align: center;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+      color: #000000;
+    }
+
+    .doc-content h2 {
+      font-family: 'Times New Roman', Times, serif;
+      font-size: 12pt;
+      font-weight: bold;
+      margin-top: 16px;
+      margin-bottom: 6px;
+      color: #000000;
+      border-bottom: 1.5px solid #1e293b;
+      padding-bottom: 3px;
+    }
+
+    .doc-content h3 {
+      font-family: 'Times New Roman', Times, serif;
+      font-size: 11.5pt;
+      font-weight: bold;
+      margin-top: 12px;
+      margin-bottom: 4px;
+      color: #0f172a;
+    }
+
+    .doc-content p {
+      margin-bottom: 8px;
+      text-align: justify;
+    }
+
+    .doc-content ul,
+    .doc-content ol {
+      margin-left: 22px;
+      margin-bottom: 10px;
+    }
+
+    .doc-content ul {
+      list-style-type: disc;
+    }
+
+    .doc-content ol {
+      list-style-type: decimal;
+    }
+
+    .doc-content li {
+      margin-bottom: 4px;
+    }
+
+    .doc-content table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      margin-bottom: 14px;
+      font-size: 10.5pt;
+    }
+
+    .doc-content th,
+    .doc-content td {
+      border: 1px solid #1e293b;
+      padding: 6px 8px;
+      vertical-align: top;
+      text-align: left;
+    }
+
+    .doc-content th {
+      background-color: #f1f5f9;
+      font-weight: bold;
+      text-align: center;
+    }
+
+    /* Tabel identitas tanpa border luar tebal agar rapi */
+    .doc-content table.meta-table td,
+    .doc-content table.meta-table th {
+      border: 1px solid #cbd5e1;
+      padding: 5px 8px;
+    }
+
+    /* Blok Tanda Tangan */
+    .doc-content .signature-grid {
+      display: table;
+      width: 100%;
+      margin-top: 28px;
+      page-break-inside: avoid;
+    }
+
+    .doc-content .signature-col {
+      display: table-cell;
+      width: 50%;
+      vertical-align: top;
+      text-align: center;
+      padding: 0 12px;
+    }
+
+    /* Mode edit dokumen */
+    .a4-paper[contenteditable="true"] {
+      outline: 2px dashed #3b82f6;
+      outline-offset: 4px;
+      background-color: #fffef7;
+    }
+
+    /* Pengaturan khusus saat Cetak (Print) */
+    @media print {
+      body {
+        background: #ffffff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      .no-print {
+        display: none !important;
+      }
+
+      #workspace-view {
+        display: block !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+
+      #preview-column {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+
+      .a4-paper {
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        min-height: auto !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+
+      @page {
+        size: A4 portrait;
+        margin: 15mm 15mm 15mm 15mm;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-blue-100 selection:text-blue-900">
+
+  <!-- Toast Notification Container (Pengganti alert) -->
+  <div id="toast-container" class="no-print fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+  <!-- =========================================================
+       HALAMAN UTAMA / BERANDA
+       Hanya menampilkan judul aplikasi, 5 Menu Utama, dan Footer
+       ========================================================= -->
+  <main id="home-view" class="flex-1 flex flex-col justify-center items-center px-4 sm:px-6 lg:px-8 py-10 sm:py-14 fade-in">
+    <div class="w-full max-w-5xl mx-auto">
+      <!-- Header Ringkas Beranda -->
+      <header class="text-center mb-10 sm:mb-12">
+        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-900 text-white text-xs font-semibold tracking-wide shadow-sm mb-4">
+          <span>Kurikulum Merdeka • Pembelajaran Mendalam</span>
+        </div>
+        <h1 class="text-2xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
+          Generator Perangkat Ajar Guru
+        </h1>
+        <p class="mt-2 text-xs sm:text-sm font-medium text-slate-500">
+          Jenjang PAUD • SD • SMP • SMA • SMK — Siap Unduh Format DOC (.doc)
+        </p>
+      </header>
+
+      <!-- 5 MENU UTAMA -->
+      <section aria-label="Menu Utama Generator" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        
+        <!-- MENU 1: RPP -->
+        <button type="button" onclick="openGenerator('RPP')" class="group text-left bg-white hover:bg-emerald-50/50 border border-slate-200/90 hover:border-emerald-400 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-200 flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-emerald-500">
+          <div class="flex items-center gap-4">
+            <span class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-emerald-100 text-emerald-700 group-hover:bg-emerald-600 group-hover:text-white transition-colors shrink-0">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </span>
+            <div>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-700">Menu 01</span>
+              <h2 class="text-lg sm:text-xl font-extrabold text-slate-900 group-hover:text-emerald-800 transition-colors">RPP</h2>
+            </div>
+          </div>
+          <svg class="w-5 h-5 text-slate-400 group-hover:text-emerald-600 transform group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+
+        <!-- MENU 2: MODUL AJAR -->
+        <button type="button" onclick="openGenerator('MODUL_AJAR')" class="group text-left bg-white hover:bg-indigo-50/50 border border-slate-200/90 hover:border-indigo-400 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-200 flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <div class="flex items-center gap-4">
+            <span class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-indigo-100 text-indigo-700 group-hover:bg-indigo-600 group-hover:text-white transition-colors shrink-0">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+              </svg>
+            </span>
+            <div>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-indigo-700">Menu 02</span>
+              <h2 class="text-lg sm:text-xl font-extrabold text-slate-900 group-hover:text-indigo-800 transition-colors">MODUL AJAR</h2>
+            </div>
+          </div>
+          <svg class="w-5 h-5 text-slate-400 group-hover:text-indigo-600 transform group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+
+        <!-- MENU 3: MEDIA AJAR -->
+        <button type="button" onclick="openGenerator('MEDIA_AJAR')" class="group text-left bg-white hover:bg-blue-50/50 border border-slate-200/90 hover:border-blue-400 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-200 flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <div class="flex items-center gap-4">
+            <span class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-blue-100 text-blue-700 group-hover:bg-blue-600 group-hover:text-white transition-colors shrink-0">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+              </svg>
+            </span>
+            <div>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-blue-700">Menu 03</span>
+              <h2 class="text-lg sm:text-xl font-extrabold text-slate-900 group-hover:text-blue-800 transition-colors">MEDIA AJAR</h2>
+            </div>
+          </div>
+          <svg class="w-5 h-5 text-slate-400 group-hover:text-blue-600 transform group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+
+        <!-- MENU 4: LKPD -->
+        <button type="button" onclick="openGenerator('LKPD')" class="group text-left bg-white hover:bg-amber-50/50 border border-slate-200/90 hover:border-amber-400 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-200 flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-amber-500">
+          <div class="flex items-center gap-4">
+            <span class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-amber-100 text-amber-700 group-hover:bg-amber-600 group-hover:text-white transition-colors shrink-0">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+              </svg>
+            </span>
+            <div>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-amber-700">Menu 04</span>
+              <h2 class="text-lg sm:text-xl font-extrabold text-slate-900 group-hover:text-amber-800 transition-colors">LKPD</h2>
+            </div>
+          </div>
+          <svg class="w-5 h-5 text-slate-400 group-hover:text-amber-600 transform group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+
+        <!-- MENU 5: SOAL -->
+        <button type="button" onclick="openGenerator('SOAL')" class="group text-left bg-white hover:bg-rose-50/50 border border-slate-200/90 hover:border-rose-400 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-all duration-200 flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-rose-500 sm:col-span-2 lg:col-span-1">
+          <div class="flex items-center gap-4">
+            <span class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-rose-100 text-rose-700 group-hover:bg-rose-600 group-hover:text-white transition-colors shrink-0">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </span>
+            <div>
+              <span class="text-[11px] font-bold uppercase tracking-wider text-rose-700">Menu 05</span>
+              <h2 class="text-lg sm:text-xl font-extrabold text-slate-900 group-hover:text-rose-800 transition-colors">SOAL</h2>
+            </div>
+          </div>
+          <svg class="w-5 h-5 text-slate-400 group-hover:text-rose-600 transform group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+
+      </section>
+    </div>
+  </main>
+
+  <!-- =========================================================
+       HALAMAN WORKSPACE GENERATOR (Muncul saat salah satu menu diklik)
+       ========================================================= -->
+  <section id="workspace-view" class="hidden flex-1 flex flex-col fade-in">
+    <!-- Top Navigation Bar Workspace -->
+    <div class="no-print sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-200 px-4 sm:px-6 lg:px-8 py-3.5">
+      <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <button type="button" onclick="backToHome()" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 active:scale-[0.99] transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            <span>Beranda</span>
+          </button>
+          <div>
+            <div class="flex items-center gap-2">
+              <span id="ws-badge" class="text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800">RPP</span>
+              <h1 id="ws-title" class="text-base sm:text-lg font-bold text-slate-900">Generator RPP</h1>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Switcher 5 Menu di Header Workspace -->
+        <div class="flex items-center gap-1.5 overflow-x-auto max-w-full py-0.5">
+          <button type="button" onclick="openGenerator('RPP')" data-nav="RPP" class="ws-nav-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition">RPP</button>
+          <button type="button" onclick="openGenerator('MODUL_AJAR')" data-nav="MODUL_AJAR" class="ws-nav-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition">MODUL AJAR</button>
+          <button type="button" onclick="openGenerator('MEDIA_AJAR')" data-nav="MEDIA_AJAR" class="ws-nav-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition">MEDIA AJAR</button>
+          <button type="button" onclick="openGenerator('LKPD')" data-nav="LKPD" class="ws-nav-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition">LKPD</button>
+          <button type="button" onclick="openGenerator('SOAL')" data-nav="SOAL" class="ws-nav-btn px-3 py-1.5 rounded-lg text-xs font-semibold transition">SOAL</button>
+        </div>
+      </div>
+    </div>
+            <!-- Jenjang Pendidikan & Kelas/Fase -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div>
+                <label for="inp-jenjang" class="block text-xs font-semibold text-slate-700 mb-1">Jenjang &amp; Fase Kurikulum <span class="text-rose-500">*</span></label>
+                <select id="inp-jenjang" onchange="handleJenjangChange()" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition">
+                  <option value="PAUD / TK / RA (Fase Fondasi)">PAUD / TK / RA (Fase Fondasi)</option>
+                  <option value="SD / MI - Fase A (Kelas 1–2)">SD / MI — Fase A (Kelas 1–2)</option>
+                  <option value="SD / MI - Fase B (Kelas 3–4)">SD / MI — Fase B (Kelas 3–4)</option>
+                  <option value="SD / MI - Fase C (Kelas 5–6)">SD / MI — Fase C (Kelas 5–6)</option>
+                  <option value="SMP / MTs - Fase D (Kelas 7–9)" selected>SMP / MTs — Fase D (Kelas 7–9)</option>
+                  <option value="SMA / MA - Fase E (Kelas 10)">SMA / MA — Fase E (Kelas 10)</option>
+                  <option value="SMA / MA - Fase F (Kelas 11–12)">SMA / MA — Fase F (Kelas 11–12)</option>
+                  <option value="SMK / MAK - Fase E (Kelas 10 Kejuruan)">SMK / MAK — Fase E (Kelas 10 Kejuruan)</option>
+                  <option value="SMK / MAK - Fase F (Kelas 11–12 Kejuruan)">SMK / MAK — Fase F (Kelas 11–12 Kejuruan)</option>
+                </select>
+              </div>
+              <div>
+                <label for="inp-kelas" class="block text-xs font-semibold text-slate-700 mb-1">Kelas / Kelompok / Jurusan <span class="text-rose-500">*</span></label>
+                <input type="text" id="inp-kelas" required placeholder="Contoh: Kelas VII / Semester 1" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition" />
+              </div>
+            </div>
+
+            <!-- Mata Pelajaran / Tema / Elemen CP -->
+            <div>
+              <label for="inp-mapel" class="block text-xs font-semibold text-slate-700 mb-1">Mata Pelajaran / Tema PAUD / Elemen CP <span class="text-rose-500">*</span></label>
+              <input type="text" id="inp-mapel" required placeholder="Contoh: Matematika / IPAS / Bahasa Indonesia / Dasar Kejuruan" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition" />
+            </div>
+
+            <!-- 8 Dimensi Profil Lulusan (Pembelajaran Mendalam Kurikulum Merdeka Terbaru) -->
+            <div class="bg-slate-50 border border-slate-200/80 rounded-xl p-3.5">
+              <span class="block text-xs font-bold text-slate-800 mb-2">Dimensi Profil Lulusan (Pembelajaran Mendalam)</span>
+              <div class="grid grid-cols-2 gap-2 text-xs text-slate-700">
+                <label class="inline-flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" name="dimensi-dl" value="Keimanan dan Ketakwaan terhadap Tuhan YME" class="rounded text-slate-900 focus:ring-slate-500" />
+                  <span>Keimanan &amp; Ketakwaan</span>
+                </label>
+                <label class="inline-flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" name="dimensi-dl" value="Kewargaan" class="rounded text-slate-900 focus:ring-slate-500" />
+                  <span>Kewargaan</span>
+                </label>
+                <label class="inline-flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" name="dimensi-dl" value="Penalaran Kritis" checked class="rounded text-slate-900 focus:ring-slate-500" />
+                  <span>Penalaran Kritis</span>
+                </label>
+                <label class="inline-flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" name="dimensi-dl" value="Kreativitas" checked class="rounded text-slate-900 focus:ring-slate-500" />
+                  <span>Kreativitas</span>
+                </label>
+                <label class="inline-flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" name="dimensi-dl" value="Kolaborasi" checked class="rounded text-slate-900 focus:ring-slate-500" />
+                  <span>Kolaborasi</span>
+                </label>
+                <label class="inline-flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" name="dimensi-dl" value="Kemandirian" class="rounded text-slate-900 focus:ring-slate-500" />
+                  <span>Kemandirian</span>
+                </label>
+                <label class="inline-flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" name="dimensi-dl" value="Kesehatan" class="rounded text-slate-900 focus:ring-slate-500" />
+                  <span>Kesehatan</span>
+                </label>
+                <label class="inline-flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" name="dimensi-dl" value="Komunikasi" class="rounded text-slate-900 focus:ring-slate-500" />
+                  <span>Komunikasi</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Semester & Alokasi Waktu -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div>
+                <label for="inp-semester" class="block text-xs font-semibold text-slate-700 mb-1">Semester &amp; Tahun Ajaran</label>
+                <input type="text" id="inp-semester" value="Ganjil / 2026-2027" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition" />
+              </div>
+              <div>
+                <label for="inp-waktu" class="block text-xs font-semibold text-slate-700 mb-1">Alokasi Waktu</label>
+                <input type="text" id="inp-waktu" value="2 x 40 Menit (1 Pertemuan)" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition" />
+              </div>
+            </div>
+
+            <!-- Materi Pokok / Topik -->
+            <div>
+              <label for="inp-materi" class="block text-xs font-semibold text-slate-700 mb-1">Topik / Materi Pokok <span class="text-rose-500">*</span></label>
+              <input type="text" id="inp-materi" required placeholder="Contoh: Sistem Persamaan Linear Dua Variabel (SPLDV)" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition" />
+            </div>
+
+            <!-- Field Dinamis sesuai Jenis Menu (RPP / MEDIA AJAR / LKPD / SOAL / MODUL AJAR) -->
+            <div id="dynamic-fields" class="space-y-4"></div>
+
+            <!-- Catatan / Tujuan Pembelajaran Tambahan -->
+            <div>
+              <label for="inp-catatan" class="block text-xs font-semibold text-slate-700 mb-1">Tujuan Pembelajaran / Fokus Khusus (Opsional)</label>
+              <textarea id="inp-catatan" rows="2" placeholder="Tuliskan tujuan pembelajaran spesifik atau karakteristik siswa jika ada..." class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition"></textarea>
+            </div>
+
+            <!-- Tombol Submit Generate -->
+            <div class="pt-2">
+              <button type="submit" id="btn-generate" class="w-full py-3.5 px-5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm shadow-md hover:shadow-lg active:scale-[0.99] transition flex items-center justify-center gap-2.5 cursor-pointer">
+                <svg id="btn-icon" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <span id="btn-text">Generate Perangkat Sekarang</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- KOLOM KANAN: PRATINJAU HASIL & TOMBOL CETAK / DOWNLOAD PDF / DOC -->
+        <div id="preview-column" class="lg:col-span-7 flex flex-col gap-4">
+          
+          <!-- Toolbar Aksi Dokumen (Print, PDF, DOC, Edit, Copy) -->
+          <div class="no-print bg-white rounded-2xl border border-slate-200/90 shadow-sm p-3.5 sm:p-4 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500" id="status-dot"></span>
+              <span id="doc-status-label" class="text-xs sm:text-sm font-semibold text-slate-700">Pratinjau Lembar A4 Siap Cetak</span>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2">
+              <!-- Toggle Edit Langsung -->
+              <button type="button" id="btn-toggle-edit" onclick="toggleEditMode()" disabled class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200 disabled:opacity-40 disabled:cursor-not-allowed transition" title="Edit teks dokumen secara langsung">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                <span id="edit-btn-label">Edit Teks</span>
+              </button>
+
+              <!-- Tombol Cetak / Print -->
+              <button type="button" id="btn-print" onclick="printDocument()" disabled class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-800 text-white hover:bg-slate-900 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+                <span>Cetak</span>
+              </button>
+
+              <!-- Tombol Download PDF -->
+              <button type="button" id="btn-pdf" onclick="downloadPDF()" disabled class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span>Download PDF</span>
+              </button>
+
+              <!-- Tombol Download DOC -->
+              <button type="button" id="btn-doc" onclick="downloadDOC()" disabled class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed shadow-sm transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span>Download DOC (.doc)</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Area Lembar Kertas A4 -->
+          <div class="overflow-x-auto pb-4">
+            <div id="printable-document" class="a4-paper doc-content">
+              <!-- Empty State Awal sebelum generate -->
+              <div id="doc-placeholder" class="h-full min-h-[240mm] flex flex-col items-center justify-center text-center px-6 py-12 font-sans">
+                <div class="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mb-4">
+                  <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <h3 class="text-base font-bold text-slate-800">Lembar Dokumen Siap Digunakan</h3>
+                <p class="text-sm text-slate-500 max-w-md mt-1.5 leading-relaxed">
+                  Isi formulir di sebelah kiri lalu klik tombol <strong>Generate</strong>. Hasil dokumen terstruktur format standar pendidikan Indonesia akan tampil di kertas A4 ini dan siap dicetak atau diunduh ke <strong>PDF</strong> &amp; <strong>DOC</strong>.
+                </p>
+              </div>
+
+              <!-- Loading Skeleton saat proses AI berjalan -->
+              <div id="doc-loading" class="hidden min-h-[240mm] flex flex-col items-center justify-center text-center px-6 py-12 font-sans">
+                <div class="w-12 h-12 border-4 border-slate-200 border-t-slate-900 rounded-full animate-spin mb-4"></div>
+                <h3 class="text-base font-bold text-slate-900">Sedang Menyusun Dokumen...</h3>
+                <p id="loading-subtext" class="text-sm text-slate-500 max-w-sm mt-1">
+                  Menyelaraskan capaian pembelajaran, sintaks kegiatan, tabel penilaian, dan format cetak A4.
+                </p>
+              </div>
+
+              <!-- Konten Hasil Generate akan dirender di sini -->
+              <div id="doc-output" class="hidden"></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       FOOTER BAGIAN BAWAH HALAMAN WEB
+       ========================================================= -->
+  <footer class="no-print border-t border-slate-200/80 bg-white py-4 px-4 text-center">
+    <p class="text-xs sm:text-sm font-semibold text-slate-700 tracking-wide">
+      Pengembang : Anton Adiwijaya, S.Pd.
+    </p>
+  </footer>
+
+  <!-- =========================================================
+       JAVASCRIPT LOGIC (TERENKAPSULASI & OTOMATIS)
+       ========================================================= -->
+  <script>
+    (function () {
+      'use strict';
+
+      // Konfigurasi internal layanan (tidak ditampilkan di front-end UI)
+      const _svcCfg = Object.freeze({
+        _k: ['AQ.Ab8RN6JyhJsJHh', '13FoBQNZyWX1LtCKv', 'KSvbIsfPtF8OUfXJ9lA'].join(''),
+        _m: 'gemini-3-flash-preview',
+        _ep: 'https://generativelanguage.googleapis.com/v1beta/models/'
+      });
+
+      // State Aplikasi
+      let currentMode = 'RPP';
+      let hasGeneratedContent = false;
+      let isEditMode = false;
+
+      // Metadata Konfigurasi untuk 5 Menu Utama
+      const MENU_CONFIG = {
+        RPP: {
+          badge: 'MENU 01 • RPP',
+          badgeClass: 'bg-emerald-100 text-emerald-800',
+          title: 'Generator RPP Pembelajaran Mendalam',
+          btnText: 'Generate RPP Sekarang',
+          docPrefix: 'RPP_Pembelajaran_Mendalam',
+          dynamicHTML: `
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div>
+                <label for="inp-model" class="block text-xs font-semibold text-slate-700 mb-1">Praktik Pedagogis / Model</label>
+                <select id="inp-model" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none">
+                  <option value="Problem Based Learning (PBL)">Problem Based Learning (PBL)</option>
+                  <option value="Project Based Learning (PjBL)">Project Based Learning (PjBL)</option>
+                  <option value="Discovery / Inquiry Learning">Discovery / Inquiry Learning</option>
+                  <option value="Pembelajaran Berdiferensiasi">Pembelajaran Berdiferensiasi</option>
+                  <option value="Bermain Sambil Belajar (PAUD / Fase Fondasi)">Bermain Sambil Belajar (PAUD)</option>
+                  <option value="Teaching Factory / Project Work (SMK)">Teaching Factory / Project Work (SMK)</option>
+                </select>
+              </div>
+              <div>
+                <label for="inp-kurikulum" class="block text-xs font-semibold text-slate-700 mb-1">Prinsip Pembelajaran Mendalam</label>
+                <select id="inp-kurikulum" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none">
+                  <option value="Berkesadaran (Mindful), Bermakna (Meaningful), dan Menggembirakan (Joyful)">Lengkap: Mindful, Meaningful &amp; Joyful</option>
+                  <option value="Fokus Eksplorasi Bermakna (Meaningful) & Kontekstual">Fokus Bermakna &amp; Kontekstual</option>
+                  <option value="Fokus Interaktif & Menggembirakan (Joyful Learning)">Fokus Interaktif &amp; Joyful</option>
+                </select>
+              </div>
+            </div>
+          `
+        },
+        MEDIA_AJAR: {
+          badge: 'MENU 03 • MEDIA AJAR',
+          badgeClass: 'bg-blue-100 text-blue-800',
+          title: 'Generator Media Ajar Pembelajaran Mendalam',
+          btnText: 'Generate Media Ajar Sekarang',
+          docPrefix: 'Media_Ajar',
+          dynamicHTML: `
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div>
+                <label for="inp-jumlah-slide" class="block text-xs font-semibold text-slate-700 mb-1">Jumlah Slide / Bagian</label>
+                <select id="inp-jumlah-slide" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none">
+                  <option value="6 Slide">6 Slide (Ringkas)</option>
+                  <option value="8 Slide" selected>8 Slide (Standar 1 Pertemuan)</option>
+                  <option value="10 Slide">10 Slide (Lengkap & Mendalam)</option>
+                  <option value="12 Slide">12 Slide (Komprehensif)</option>
+                </select>
+              </div>
+              <div>
+                <label for="inp-gaya-media" class="block text-xs font-semibold text-slate-700 mb-1">Gaya Penyajian Media</label>
+                <select id="inp-gaya-media" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none">
+                  <option value="Interaktif, Visual & Mudah Dipahami Siswa">Interaktif &amp; Visual</option>
+                  <option value="Kontekstual & Studi Kasus Kehidupan Nyata">Studi Kasus Kontekstual</option>
+                  <option value="Bercerita, Gambar & Lagu/Permainan (PAUD/SD)">Bercerita, Gambar &amp; Permainan (PAUD/SD)</option>
+                  <option value="Simulasi Praktik Industri & Studi Kasus (SMK/SMA)">Simulasi Praktik &amp; Studi Kasus (SMK/SMA)</option>
+                </select>
+              </div>
+            </div>
+          `
+        },
+        LKPD: {
+          badge: 'MENU 04 • LKPD',
+          badgeClass: 'bg-amber-100 text-amber-800',
+          title: 'Generator LKPD Pembelajaran Mendalam',
+          btnText: 'Generate LKPD Sekarang',
+          docPrefix: 'LKPD',
+          dynamicHTML: `
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div>
+                <label for="inp-jenis-lkpd" class="block text-xs font-semibold text-slate-700 mb-1">Jenis Aktivitas LKPD</label>
+                <select id="inp-jenis-lkpd" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none">
+                  <option value="Memahami, Mengaplikasi & Merefleksi Masalah Nyata">Eksplorasi Masalah Nyata (Deep Learning)</option>
+                  <option value="Eksperimen / Praktikum / Observasi Langsung">Praktikum / Observasi Langsung</option>
+                  <option value="Aktivitas Bermain, Mewarnai & Mengamati (PAUD/SD)">Aktivitas Bermain &amp; Mengamati (PAUD/SD)</option>
+                  <option value="Jobsheet / Lembar Kerja Praktik Kejuruan (SMK)">Jobsheet / Praktik Kejuruan (SMK)</option>
+                </select>
+              </div>
+              <div>
+                <label for="inp-mode-kerja" class="block text-xs font-semibold text-slate-700 mb-1">Pola Pengerjaan</label>
+                <select id="inp-mode-kerja" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none">
+                  <option value="Kelompok Kolaboratif (3-5 Siswa)">Kelompok Kolaboratif (3–5 Siswa)</option>
+                  <option value="Individu (Mandiri)">Individu (Mandiri)</option>
+                  <option value="Berpasangan (Think-Pair-Share)">Berpasangan</option>
+                </select>
+              </div>
+            </div>
+          `
+        },
+        SOAL: {
+          badge: 'MENU 05 • SOAL',
+          badgeClass: 'bg-rose-100 text-rose-800',
+          title: 'Generator Soal, Kisi-Kisi & Kunci Jawaban',
+          btnText: 'Generate Naskah Soal Sekarang',
+          docPrefix: 'Soal_Asesmen',
+          dynamicHTML: `
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label for="inp-bentuk-soal" class="block text-xs font-semibold text-slate-700 mb-1">Bentuk Soal</label>
+                <select id="inp-bentuk-soal" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none">
+                  <option value="Pilihan Ganda (A, B, C, D)">Pilihan Ganda (A-D)</option>
+                  <option value="Pilihan Ganda (A, B, C, D, E)">Pilihan Ganda (A-E)</option>
+                  <option value="Uraian / Essay Analitis">Uraian / Essay Analitis</option>
+                  <option value="Campuran (Pilihan Ganda + Uraian)">Campuran (PG + Uraian)</option>
+                  <option value="Asesmen Observasi & Lisan (Khusus PAUD)">Asesmen Observasi &amp; Lisan (PAUD)</option>
+                </select>
+              </div>
+              <div>
+                <label for="inp-jumlah-soal" class="block text-xs font-semibold text-slate-700 mb-1">Jumlah Soal</label>
+                <select id="inp-jumlah-soal" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none">
+                  <option value="5 Soal">5 Soal</option>
+                  <option value="10 Soal" selected>10 Soal</option>
+                  <option value="15 Soal">15 Soal</option>
+                  <option value="20 Soal">20 Soal</option>
+                </select>
+              </div>
+              <div>
+                <label for="inp-level-soal" class="block text-xs font-semibold text-slate-700 mb-1">Level Kognitif</label>
+                <select id="inp-level-soal" class="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm text-slate-900 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none">
+                  <option value="Proporsional (Memahami, Mengaplikasi, Merefleksi / C1-C6)">Proporsional (C1–C6)</option>
+                  <option value="Dominan HOTS & Penalaran Mendalam (C4-C6)">Dominan HOTS (C4–C6)</option>
+                  <option value="Dasar & Pemahaman Konsep (C1-C3)">Dasar &amp; Pemahaman (C1–C3)</option>
+                </select>
+              </div>
+            </div>
+          `
+        },
+        MODUL_AJAR: {
+          badge: 'MENU 02 • MODUL AJAR',
+          badgeClass: 'bg-indigo-100 text-indigo-800',
+          title: 'Generator Modul Ajar Pembelajaran Mendalam',
+          btnText: 'Generate Modul Ajar Sekarang',
+          docPrefix: 'Modul_Ajar_Pembelajaran_Mendalam',
+          dynamicHTML: `
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div>
+                <label for="inp-pendekatan" class="block text-xs font-semibold text-slate-700 mb-1">Strategi Pembelajaran Mendalam</label>
+                <select id="inp-pendekatan" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none">
+                  <option value="Deep Learning (Berkesadaran, Bermakna, Menggembirakan)">Deep Learning (Mindful, Meaningful, Joyful)</option>
+                  <option value="Pembelajaran Berdiferensiasi (Konten, Proses, Produk)">Pembelajaran Berdiferensiasi</option>
+                  <option value="Teaching at the Right Level (TaRL)">Teaching at the Right Level (TaRL)</option>
+                  <option value="Project-Based & Contextual Learning">Project-Based &amp; Contextual Learning</option>
+                </select>
+              </div>
+              <div>
+                <label for="inp-p5" class="block text-xs font-semibold text-slate-700 mb-1">Pemanfaatan Digital &amp; Kemitraan</label>
+                <select id="inp-p5" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm text-slate-900 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none">
+                  <option value="Integrasi Media Digital Interaktif & Kolaborasi Orang Tua/Komunitas">Media Digital Interaktif &amp; Kolaborasi</option>
+                  <option value="Eksplorasi Lingkungan Sekolah & Alam Sekitar">Eksplorasi Lingkungan &amp; Alam Sekitar</option>
+                  <option value="Kemitraan Dunia Usaha / Dunia Industri (DUDI - SMK)">Kemitraan Industri / DUDI (Khusus SMK)</option>
+                </select>
+              </div>
+            </div>
+          `
+        }
+      };
+
+      // Penyesuaian placeholder otomatis saat Jenjang Pendidikan (PAUD/SD/SMP/SMA/SMK) dipilih
+      window.handleJenjangChange = function () {
+        const jenjang = document.getElementById('inp-jenjang')?.value || '';
+        const inpKelas = document.getElementById('inp-kelas');
+        const inpMapel = document.getElementById('inp-mapel');
+        const inpMateri = document.getElementById('inp-materi');
+        if (!inpKelas || !inpMapel || !inpMateri) return;
+
+        if (jenjang.startsWith('PAUD')) {
+          inpKelas.placeholder = 'Contoh: Kelompok B (Usia 5–6 Tahun)';
+          inpMapel.placeholder = 'Contoh: Nilai Agama & Budi Pekerti / Jati Diri / Dasar Literasi & STEAM';
+          inpMateri.placeholder = 'Contoh: Mengenal Anggota Tubuh & Cara Merawat Diri';
+        } else if (jenjang.startsWith('SD')) {
+          inpKelas.placeholder = 'Contoh: Kelas IV (Semester 1)';
+          inpMapel.placeholder = 'Contoh: IPAS / Matematika / Bahasa Indonesia / Pendidikan Pancasila';
+          inpMateri.placeholder = 'Contoh: Perubahan Wujud Zat dalam Kehidupan Sehari-hari';
+        } else if (jenjang.startsWith('SMP')) {
+          inpKelas.placeholder = 'Contoh: Kelas VIII (Semester 1)';
+          inpMapel.placeholder = 'Contoh: IPA / Matematika / Bahasa Inggris / Informatika';
+          inpMateri.placeholder = 'Contoh: Sistem Pencernaan Manusia dan Kesehatan';
+        } else if (jenjang.startsWith('SMA')) {
+          inpKelas.placeholder = 'Contoh: Kelas XI (Fase F)';
+          inpMapel.placeholder = 'Contoh: Biologi / Ekonomi / Fisika / Sosiologi / Bahasa Indonesia';
+          inpMateri.placeholder = 'Contoh: Struktur dan Fungsi Sel pada Makhluk Hidup';
+        } else if (jenjang.startsWith('SMK')) {
+          inpKelas.placeholder = 'Contoh: Kelas XI Teknik Komputer dan Jaringan / Akuntansi';
+          inpMapel.placeholder = 'Contoh: Konsentrasi Keahlian / Projek IPAS / Dasar-Dasar Kejuruan';
+          inpMateri.placeholder = 'Contoh: Konfigurasi Jaringan Lokal (LAN) dan Keamanan Dasar';
+        }
+      };
+
+      // Utilitas Toast Notification (Tanpa alert)
+      function showToast(message, type = 'info') {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+
+        const colors = {
+          success: 'bg-emerald-900 text-white border-emerald-700',
+          error: 'bg-rose-900 text-white border-rose-700',
+          info: 'bg-slate-900 text-white border-slate-700'
+        };
+
+        const toast = document.createElement('div');
+        toast.className = `pointer-events-auto rounded-xl border px-4 py-3 text-xs sm:text-sm font-medium shadow-lg transition-all duration-300 transform translate-y-0 opacity-100 ${colors[type] || colors.info}`;
+        toast.textContent = message;
+
+        container.appendChild(toast);
+
+        setTimeout(() => {
+          toast.classList.add('opacity-0', '-translate-y-2');
+          setTimeout(() => toast.remove(), 300);
+        }, 3800);
+      }
+
+      // Navigasi: Buka Generator dari Menu Beranda
+      window.openGenerator = function (mode) {
+        if (!MENU_CONFIG[mode]) return;
+        currentMode = mode;
+
+        const cfg = MENU_CONFIG[mode];
+        document.getElementById('home-view').classList.add('hidden');
+        document.getElementById('workspace-view').classList.remove('hidden');
+
+        // Update Header & Form Workspace
+        const badgeEl = document.getElementById('ws-badge');
+        badgeEl.textContent = cfg.badge;
+        badgeEl.className = `text-xs font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md ${cfg.badgeClass}`;
+
+        document.getElementById('ws-title').textContent = cfg.title;
+        document.getElementById('btn-text').textContent = cfg.btnText;
+        document.getElementById('dynamic-fields').innerHTML = cfg.dynamicHTML;
+
+        // Highlight tombol menu aktif di topbar workspace
+        document.querySelectorAll('.ws-nav-btn').forEach((btn) => {
+          if (btn.dataset.nav === mode) {
+            btn.className = 'ws-nav-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-900 text-white shadow-sm transition';
+          } else {
+            btn.className = 'ws-nav-btn px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100 transition';
+          }
+        });
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      };
+
+      // Navigasi: Kembali ke Halaman Utama (5 Menu)
+      window.backToHome = function () {
+        document.getElementById('workspace-view').classList.add('hidden');
+        document.getElementById('home-view').classList.remove('hidden');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      };
+
+      // Menyusun System Instruction & User Prompt sesuai jenis dokumen
+      function buildPrompts(mode, data) {
+        const systemInstruction = `Anda adalah pakar kurikulum nasional Indonesia dan penyusun perangkat pembelajaran berbasis PEMBELAJARAN MENDALAM (Deep Learning) Kurikulum Merdeka terbaru untuk semua jenjang (PAUD, SD, SMP, SMA, SMK).
+Tugas Anda adalah menghasilkan dokumen perangkat ajar guru yang sangat rapi, lengkap, sistematis, autentik, dan siap diunduh ke Microsoft Word (.doc) maupun dicetak di kertas A4.
+
+LANDASAN PEMBELAJARAN MENDALAM (DEEP LEARNING) KURIKULUM MERDEKA TERBARU YANG WAJIB TERCERMIN:
+1. Tiga Prinsip Pembelajaran: Berkesadaran (Mindful), Bermakna (Meaningful), dan Menggembirakan (Joyful).
+2. Tiga Pengalaman Belajar: Memahami (Understanding), Mengaplikasi (Applying), dan Merefleksi (Reflecting).
+3. Empat Kerangka Pembelajaran: Praktik Pedagogis, Kemitraan Pembelajaran, Lingkungan Pembelajaran, dan Pemanfaatan Digital.
+4. Delapan Dimensi Profil Lulusan: Keimanan dan Ketakwaan terhadap Tuhan YME, Kewargaan, Penalaran Kritis, Kreativitas, Kolaborasi, Kemandirian, Kesehatan, dan Komunikasi.
+5. Penyesuaian Karakteristik Jenjang:
+   - Jika PAUD (Fase Fondasi): gunakan pendekatan bermain sambil belajar, stimulasi holistik-integratif, dan asesmen observasi/anekdot/hasil karya.
+   - Jika SD (Fase A-C): gunakan pendekatan konkret, kontekstual, bertahap, dan menyenangkan.
+   - Jika SMP (Fase D): gunakan eksplorasi konsep, pemecahan masalah nyata, dan kolaborasi aktif.
+   - Jika SMA (Fase E-F): gunakan analisis mendalam, riset sederhana, berpikir kritis tingkat tinggi (HOTS).
+   - Jika SMK (Fase E-F): gunakan pembelajaran berbasis proyek/industri (Teaching Factory/PjBL), keselamatan kerja (K3), dan relevansi dunia kerja (DUDI).
+
+ATURAN FORMAT OUTPUT (WAJIB DIPATUHI):
+1. Keluarkan HANYA kode HTML semantik bersih (gunakan tag: <h1>, <h2>, <h3>, <p>, <ul>, <ol>, <li>, <table>, <thead>, <tbody>, <tr>, <th>, <td>, <strong>, <em>, <div class="signature-grid">, <div class="signature-col">).
+2. JANGAN bungkus output dengan markdown backticks (\`\`\`html atau \`\`\`). JANGAN sertakan tag <html>, <head>, <body>, atau <style>.
+3. Gunakan Bahasa Indonesia baku, formal, pedagogis, dan sesuai standar administrasi guru di Indonesia.
+4. Gunakan tabel HTML (<table class="meta-table"> untuk identitas dokumen di bagian atas, dan <table> biasa untuk rincian kegiatan, kisi-kisi, atau rubrik penilaian).
+5. Di bagian paling akhir dokumen, selalu sertakan blok pengesahan tanda tangan menggunakan struktur:
+   <div class="signature-grid">
+     <div class="signature-col">Mengetahui,<br>Kepala Satuan Pendidikan<br><br><br><br><strong>(Nama Kepala Sekolah / ...........................)</strong><br>NIP. ...........................</div>
+     <div class="signature-col">Guru Kelas / Mata Pelajaran<br><br><br><br><br><strong>(Nama Guru)</strong><br>NIP. (NIP Guru)</div>
+   </div>`;
+
+        let specificTask = '';
+
+        if (mode === 'RPP') {
+          specificTask = `Buatkan RENCANA PELAKSANAAN PEMBELAJARAN (RPP) BERBASIS PEMBELAJARAN MENDALAM KURIKULUM MERDEKA TERBARU dengan rincian:
+- Satuan Pendidikan: ${data.sekolah}
+- Jenjang & Fase: ${data.jenjang}
+- Kelas / Kelompok / Jurusan: ${data.kelas}
+- Mata Pelajaran / Tema: ${data.mapel}
+- Semester / Tahun Ajaran: ${data.semester}
+- Topik / Materi Pokok: ${data.materi}
+- Alokasi Waktu: ${data.waktu}
+- Praktik Pedagogis / Model: ${data.extra1}
+- Prinsip Pembelajaran Mendalam: ${data.extra2}
+- Dimensi Profil Lulusan Terpilih: ${data.dimensi}
+- Nama Guru: ${data.guru} (NIP: ${data.nip || '-'})
+- Kepala Sekolah: ${data.kepsek || '...........................'}
+- Fokus / Catatan Tambahan: ${data.catatan || 'Sesuaikan dengan karakteristik peserta didik pada jenjang tersebut.'}
+
+Struktur wajib RPP Pembelajaran Mendalam:
+1. Judul & Tabel Identitas RPP (<table class="meta-table">).
+2. Identifikasi: Kesiapan Peserta Didik, Karakteristik Materi Pelajaran, dan Dimensi Profil Lulusan (${data.dimensi}).
+3. Desain Pembelajaran: Capaian Pembelajaran (CP), Tujuan Pembelajaran (TP), Lintas Disiplin Ilmu, Praktik Pedagogis (${data.extra1}), Kemitraan Pembelajaran, Lingkungan Pembelajaran, dan Pemanfaatan Digital.
+4. Pengalaman Belajar (Langkah-Langkah Kegiatan Pembelajaran dalam TABEL terstruktur berisi kolom Tahap & Pengalaman Belajar, Deskripsi Aktivitas Guru & Peserta Didik yang mengintegrasikan prinsip Berkesadaran, Bermakna, Menggembirakan, serta Alokasi Waktu):
+   - Kegiatan Awal (Berkesadaran & Menggembirakan)
+   - Kegiatan Inti: Tahap Memahami, Tahap Mengaplikasi, dan Tahap Merefleksi
+   - Kegiatan Penutup (Refleksi & Tindak Lanjut)
+5. Asesmen Pembelajaran: Asesmen Awal (Diagnostik), Asesmen Proses (Formatif), dan Asesmen Akhir (Sumatif) beserta Rubrik Penilaian.
+6. Blok Tanda Tangan Pengesahan Kepala Sekolah dan Guru.`;
+        } else if (mode === 'MEDIA_AJAR') {
+          specificTask = `Buatkan RANCANGAN MEDIA AJAR & BAHAN PRESENTASI PEMBELAJARAN MENDALAM lengkap dengan rincian:
+- Satuan Pendidikan: ${data.sekolah}
+- Jenjang & Fase: ${data.jenjang}
+- Kelas / Kelompok / Jurusan: ${data.kelas}
+- Mata Pelajaran / Tema: ${data.mapel}
+- Semester / Tahun Ajaran: ${data.semester}
+- Topik / Materi Pokok: ${data.materi}
+- Alokasi Waktu: ${data.waktu}
+- Jumlah Slide: ${data.extra1}
+- Gaya Penyajian: ${data.extra2}
+- Dimensi Profil Lulusan: ${data.dimensi}
+- Nama Guru: ${data.guru} (NIP: ${data.nip || '-'})
+- Kepala Sekolah: ${data.kepsek || '...........................'}
+- Fokus Tambahan: ${data.catatan || 'Sajikan secara visual, interaktif, dan sesuai perkembangan usia peserta didik.'}
+
+Struktur wajib Media Ajar:
+1. Judul Dokumen & Tabel Identitas Media Ajar (<table class="meta-table">).
+2. Tujuan Pembelajaran & Peta Konsep Materi.
+3. Rincian Konten Per Slide (${data.extra1}) yang selaras dengan alur Pembelajaran Mendalam (Slide Apersepsi Berkesadaran, Slide Eksplorasi Memahami, Slide Aplikasi Bermakna, Slide Refleksi Menggembirakan), lengkap dengan: Judul Slide, Poin Materi di Layar, Arahan Visual/Ilustrasi/Media Digital, dan Narasi Penyampaian Guru (Speaker Notes).
+4. Aktivitas Ice Breaking / Pertanyaan Pemantik Interaktif di kelas.
+5. Kuis Cepat Interaktif (5 pertanyaan review beserta kunci jawaban) dan Rangkuman Akhir.
+6. Blok Tanda Tangan Pengesahan.`;
+        } else if (mode === 'LKPD') {
+          specificTask = `Buatkan LEMBAR KERJA PESERTA DIDIK (LKPD) BERBASIS PEMBELAJARAN MENDALAM yang langsung siap dicetak dan dikerjakan peserta didik dengan rincian:
+- Satuan Pendidikan: ${data.sekolah}
+- Jenjang & Fase: ${data.jenjang}
+- Kelas / Kelompok / Jurusan: ${data.kelas}
+- Mata Pelajaran / Tema: ${data.mapel}
+- Semester / Tahun Ajaran: ${data.semester}
+- Topik / Materi Pokok: ${data.materi}
+- Alokasi Waktu: ${data.waktu}
+- Jenis Aktivitas LKPD: ${data.extra1}
+- Pola Pengerjaan: ${data.extra2}
+- Dimensi Profil Lulusan: ${data.dimensi}
+- Nama Guru: ${data.guru} (NIP: ${data.nip || '-'})
+- Kepala Sekolah: ${data.kepsek || '...........................'}
+- Fokus Tambahan: ${data.catatan || 'Sertakan ruang jawaban siswa yang rapi dan jelas.'}
+
+Struktur wajib LKPD:
+1. Header LKPD Resmi & Tabel Identitas Peserta Didik (<table class="meta-table"> berisi Nama Siswa/Anggota Kelompok, Kelas/Kelompok, No. Absen, Tanggal, Mata Pelajaran/Tema, Topik).
+2. Tujuan Pembelajaran & Petunjuk Pengerjaan (menggunakan bahasa yang ramah dan sesuai jenjang ${data.jenjang}).
+3. Stimulus Awal & Ringkasan Materi Pengantar (Tahap Memahami).
+4. Alat, Bahan, atau Sumber Belajar yang Diperlukan.
+5. Langkah Kegiatan & Lembar Kerja Eksplorasi (Tahap Mengaplikasi: sertakan tabel pengamatan/analisis atau kotak/garis ruang jawaban tertulis untuk siswa).
+6. Pertanyaan Refleksi Diri & Kesimpulan Siswa (Tahap Merefleksi).
+7. Rubrik Penilaian & Pedoman Penskoran untuk Guru.
+8. Blok Tanda Tangan Pengesahan.`;
+        } else if (mode === 'SOAL') {
+          specificTask = `Buatkan PAKET NASKAH SOAL ASESMEN PEMBELAJARAN MENDALAM LENGKAP DENGAN KISI-KISI DAN KUNCI JAWABAN dengan rincian:
+- Satuan Pendidikan: ${data.sekolah}
+- Jenjang & Fase: ${data.jenjang}
+- Kelas / Kelompok / Jurusan: ${data.kelas}
+- Mata Pelajaran / Tema: ${data.mapel}
+- Semester / Tahun Ajaran: ${data.semester}
+- Topik / Materi Pokok: ${data.materi}
+- Alokasi Waktu: ${data.waktu}
+- Bentuk Soal: ${data.extra1}
+- Jumlah Soal: ${data.extra2}
+- Level Kognitif: ${data.extra3}
+- Dimensi Profil Lulusan: ${data.dimensi}
+- Nama Guru: ${data.guru} (NIP: ${data.nip || '-'})
+- Kepala Sekolah: ${data.kepsek || '...........................'}
+- Fokus Tambahan: ${data.catatan || 'Gunakan stimulus kontekstual dan hindari ambiguitas.'}
+
+Struktur wajib Dokumen Soal:
+1. BAGIAN I: KISI-KISI PENULISAN SOAL dalam bentuk TABEL lengkap (Kolom: No, Tujuan Pembelajaran / Indikator Soal, Materi, Pengalaman Belajar / Level Kognitif, Bentuk Soal, Nomor Soal).
+2. BAGIAN II: NASKAH SOAL ASESMEN lengkap dengan Kop Satuan Pendidikan, Tabel Identitas Peserta Didik (Nama, Kelas, No. Peserta, Tanggal), Petunjuk Umum, dan butir-butir soal (${data.extra2} bentuk ${data.extra1}) yang tertata rapi sesuai jenjang ${data.jenjang}.
+3. BAGIAN III: KUNCI JAWABAN, PEMBAHASAN SINGKAT, DAN PEDOMAN PENSKORAN (rumus nilai akhir).
+4. Blok Tanda Tangan Pengesahan Kepala Sekolah dan Guru.`;
+        } else if (mode === 'MODUL_AJAR') {
+          specificTask = `Buatkan MODUL AJAR PEMBELAJARAN MENDALAM KURIKULUM MERDEKA TERBARU yang sangat lengkap dan komprehensif dengan rincian:
+- Satuan Pendidikan: ${data.sekolah}
+- Jenjang & Fase: ${data.jenjang}
+- Kelas / Kelompok / Jurusan: ${data.kelas}
+- Mata Pelajaran / Tema: ${data.mapel}
+- Semester / Tahun Ajaran: ${data.semester}
+- Topik / Materi Pokok: ${data.materi}
+- Alokasi Waktu: ${data.waktu}
+- Strategi Pembelajaran Mendalam: ${data.extra1}
+- Pemanfaatan Digital & Kemitraan: ${data.extra2}
+- Dimensi Profil Lulusan Terpilih: ${data.dimensi}
+- Nama Guru: ${data.guru} (NIP: ${data.nip || '-'})
+- Kepala Sekolah: ${data.kepsek || '...........................'}
+- Fokus Tambahan: ${data.catatan || 'Integrasikan prinsip Berkesadaran, Bermakna, dan Menggembirakan secara utuh.'}
+
+Struktur wajib Modul Ajar Pembelajaran Mendalam:
+1. Informasi Umum & Identifikasi (<table class="meta-table">): Identitas Penyusun, Jenjang/Fase (${data.jenjang}), Identifikasi Kesiapan Peserta Didik, Karakteristik Materi, dan 8 Dimensi Profil Lulusan (${data.dimensi}).
+2. Desain Pembelajaran: Capaian Pembelajaran (CP), Tujuan Pembelajaran (TP), Lintas Disiplin Ilmu, Topik Kontekstual, Praktik Pedagogis (${data.extra1}), Kemitraan Pembelajaran & Pemanfaatan Digital (${data.extra2}), serta Lingkungan Pembelajaran.
+3. Pengalaman Belajar Terperinci dalam TABEL (Pendahuluan Berkesadaran & Menggembirakan; Kegiatan Inti mencakup Memahami, Mengaplikasi, Merefleksi dengan diferensiasi proses/konten/produk; Penutup).
+4. Asesmen Pembelajaran (Asesmen Awal, Asesmen Proses/Formatif, Asesmen Akhir/Sumatif) lengkap dengan Tabel Rubrik Penilaian.
+5. Pengayaan dan Remedial, serta Refleksi Peserta Didik dan Guru.
+6. Lampiran: Ringkasan Bahan Bacaan Guru & Peserta Didik, Glosarium, dan Daftar Pustaka.
+7. Blok Tanda Tangan Pengesahan Kepala Sekolah dan Guru.`;
+        }
+
+        return { systemInstruction, userQuery: specificTask };
+      }
+
+      // Pemanggilan API dengan Exponential Backoff (tanpa ekspos key di UI/Console)
+      async function callGenerativeService(systemInstruction, userQuery) {
+        const url = `${_svcCfg._ep}${_svcCfg._m}:generateContent?key=${encodeURIComponent(_svcCfg._k)}`;
+        const payload = {
+          contents: [{ parts: [{ text: userQuery }] }],
+          systemInstruction: {
+            parts: [{ text: systemInstruction }]
+          },
+          generationConfig: {
+            temperature: 0.65,
+            maxOutputTokens: 8192
+          }
+        };
+
+        const delays = [1000, 2000, 4000, 8000];
+        let lastErr = null;
+
+        for (let attempt = 0; attempt <= delays.length; attempt++) {
+          try {
+            const response = await fetch(url, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+              if ((response.status === 429 || response.status >= 500) && attempt < delays.length) {
+                await new Promise((r) => setTimeout(r, delays[attempt]));
+                continue;
+              }
+              throw new Error(`HTTP_${response.status}`);
+            }
+
+            const result = await response.json();
+            const text = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+            if (!text) {
+              throw new Error('EMPTY_RESPONSE');
+            }
+
+            return text;
+          } catch (err) {
+            lastErr = err;
+            if (attempt < delays.length) {
+              await new Promise((r) => setTimeout(r, delays[attempt]));
+            }
+          }
+        }
+
+        throw lastErr || new Error('REQUEST_FAILED');
+      }
+
+      // Membersihkan output HTML dari potensi markdown fence atau tag berbahaya
+      function sanitizeOutputHTML(rawText) {
+        let cleaned = rawText
+          .replace(/^```html\s*/i, '')
+          .replace(/^```\s*/i, '')
+          .replace(/```\s*$/i, '')
+          .trim();
+
+        // Hapus tag script jika ada demi keamanan DOM
+        cleaned = cleaned.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+        return cleaned;
+      }
+
+      // Handler Submit Form Generate
+      window.handleGenerate = async function (event) {
+        event.preventDefault();
+
+        const selectedDimensi = Array.from(document.querySelectorAll('input[name="dimensi-dl"]:checked'))
+          .map((cb) => cb.value)
+          .join(', ');
+
+        const data = {
+          sekolah: document.getElementById('inp-sekolah').value.trim(),
+          guru: document.getElementById('inp-guru').value.trim(),
+          nip: document.getElementById('inp-nip').value.trim(),
+          kepsek: document.getElementById('inp-kepsek').value.trim(),
+          jenjang: document.getElementById('inp-jenjang').value.trim(),
+          mapel: document.getElementById('inp-mapel').value.trim(),
+          kelas: document.getElementById('inp-kelas').value.trim(),
+          semester: document.getElementById('inp-semester').value.trim(),
+          waktu: document.getElementById('inp-waktu').value.trim(),
+          materi: document.getElementById('inp-materi').value.trim(),
+          dimensi: selectedDimensi || 'Penalaran Kritis, Kreativitas, Kolaborasi',
+          catatan: document.getElementById('inp-catatan').value.trim(),
+          extra1: '',
+          extra2: '',
+          extra3: ''
+        };
+
+        if (currentMode === 'RPP') {
+          data.extra1 = document.getElementById('inp-model')?.value || '';
+          data.extra2 = document.getElementById('inp-kurikulum')?.value || '';
+        } else if (currentMode === 'MEDIA_AJAR') {
+          data.extra1 = document.getElementById('inp-jumlah-slide')?.value || '';
+          data.extra2 = document.getElementById('inp-gaya-media')?.value || '';
+        } else if (currentMode === 'LKPD') {
+          data.extra1 = document.getElementById('inp-jenis-lkpd')?.value || '';
+          data.extra2 = document.getElementById('inp-mode-kerja')?.value || '';
+        } else if (currentMode === 'SOAL') {
+          data.extra1 = document.getElementById('inp-bentuk-soal')?.value || '';
+          data.extra2 = document.getElementById('inp-jumlah-soal')?.value || '';
+          data.extra3 = document.getElementById('inp-level-soal')?.value || '';
+        } else if (currentMode === 'MODUL_AJAR') {
+          data.extra1 = document.getElementById('inp-pendekatan')?.value || '';
+          data.extra2 = document.getElementById('inp-p5')?.value || '';
+        }
+
+        // UI Loading State
+        const btnGenerate = document.getElementById('btn-generate');
+        const btnText = document.getElementById('btn-text');
+        const originalBtnText = btnText.textContent;
+
+        btnGenerate.disabled = true;
+        btnGenerate.classList.add('opacity-75', 'cursor-wait');
+        btnText.textContent = 'Sedang Memproses...';
+
+        document.getElementById('doc-placeholder').classList.add('hidden');
+        document.getElementById('doc-output').classList.add('hidden');
+        document.getElementById('doc-loading').classList.remove('hidden');
+        document.getElementById('doc-status-label').textContent = 'Menyusun Dokumen...';
+
+        // Matikan mode edit jika sedang aktif
+        if (isEditMode) {
+          toggleEditMode(false);
+        }
+
+        try {
+          const { systemInstruction, userQuery } = buildPrompts(currentMode, data);
+          const rawHTML = await callGenerativeService(systemInstruction, userQuery);
+          const cleanHTML = sanitizeOutputHTML(rawHTML);
+
+          const outputEl = document.getElementById('doc-output');
+          outputEl.innerHTML = cleanHTML;
+
+          document.getElementById('doc-loading').classList.add('hidden');
+          outputEl.classList.remove('hidden');
+
+          hasGeneratedContent = true;
+          enableActionButtons(true);
+
+          document.getElementById('doc-status-label').textContent = 'Dokumen Siap Cetak / Unduh PDF & DOC';
+          showToast('Perangkat pembelajaran berhasil disusun!', 'success');
+
+          // Scroll halus ke area dokumen pada layar mobile
+          if (window.innerWidth < 1024) {
+            document.getElementById('preview-column').scrollIntoView({ behavior: 'smooth' });
+          }
+        } catch (err) {
+          document.getElementById('doc-loading').classList.add('hidden');
+          if (hasGeneratedContent) {
+            document.getElementById('doc-output').classList.remove('hidden');
+          } else {
+            document.getElementById('doc-placeholder').classList.remove('hidden');
+          }
+          document.getElementById('doc-status-label').textContent = 'Gagal menyusun dokumen, silakan coba lagi.';
+          showToast('Terjadi gangguan koneksi saat memproses dokumen. Silakan coba kembali.', 'error');
+        } finally {
+          btnGenerate.disabled = false;
+          btnGenerate.classList.remove('opacity-75', 'cursor-wait');
+          btnText.textContent = originalBtnText;
+        }
+      };
+
+      function enableActionButtons(enabled) {
+        ['btn-toggle-edit', 'btn-print', 'btn-pdf', 'btn-doc'].forEach((id) => {
+          const el = document.getElementById(id);
+          if (el) el.disabled = !enabled;
+        });
+      }
+
+      // Toggle Edit Teks Langsung di Kertas A4
+      window.toggleEditMode = function (forceState) {
+        if (!hasGeneratedContent) return;
+        const paper = document.getElementById('printable-document');
+        const label = document.getElementById('edit-btn-label');
+        const btn = document.getElementById('btn-toggle-edit');
+
+        isEditMode = typeof forceState === 'boolean' ? forceState : !isEditMode;
+
+        if (isEditMode) {
+          paper.setAttribute('contenteditable', 'true');
+          paper.focus();
+          label.textContent = 'Selesai Edit';
+          btn.classList.remove('bg-slate-100', 'text-slate-700');
+          btn.classList.add('bg-amber-100', 'text-amber-900');
+          showToast('Mode Edit Aktif: Klik teks pada kertas untuk mengubah.', 'info');
+        } else {
+          paper.removeAttribute('contenteditable');
+          label.textContent = 'Edit Teks';
+          btn.classList.remove('bg-amber-100', 'text-amber-900');
+          btn.classList.add('bg-slate-100', 'text-slate-700');
+        }
+      };
+
+      // Helper membuat nama file bersih
+      function buildFileName(ext) {
+        const prefix = MENU_CONFIG[currentMode]?.docPrefix || 'Dokumen';
+        const mapel = (document.getElementById('inp-mapel')?.value || 'Mapel')
+          .trim()
+          .replace(/[^a-zA-Z0-9\s]/g, '')
+          .replace(/\s+/g, '_');
+        const kelas = (document.getElementById('inp-kelas')?.value || 'Kelas')
+          .trim()
+          .replace(/[^a-zA-Z0-9\s]/g, '')
+          .replace(/\s+/g, '_');
+        return `${prefix}_${mapel}_${kelas}.${ext}`;
+      }
+
+      // 1. CETAK DOKUMEN (PRINT)
+      window.printDocument = function () {
+        if (!hasGeneratedContent) return;
+        if (isEditMode) toggleEditMode(false);
+        window.print();
+      };
+
+      // 2. DOWNLOAD PDF (A4)
+      window.downloadPDF = async function () {
+        if (!hasGeneratedContent) return;
+        if (isEditMode) toggleEditMode(false);
+
+        const btnPdf = document.getElementById('btn-pdf');
+        const element = document.getElementById('doc-output');
+        const filename = buildFileName('pdf');
+
+        if (typeof html2pdf === 'undefined') {
+          showToast('Membuka dialog cetak simpan sebagai PDF...', 'info');
+          window.print();
+          return;
+        }
+
+        btnPdf.disabled = true;
+        showToast('Sedang menyiapkan file PDF A4...', 'info');
+
+        try {
+          const opt = {
+            margin: [14, 14, 14, 14],
+            filename: filename,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: {
+              scale: 2,
+              useCORS: true,
+              letterRendering: true,
+              backgroundColor: '#ffffff'
+            },
+            jsPDF: {
+              unit: 'mm',
+              format: 'a4',
+              orientation: 'portrait'
+            },
+            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+          };
+
+          await html2pdf().set(opt).from(element).save();
+          showToast(`File ${filename} berhasil diunduh!`, 'success');
+        } catch (err) {
+          showToast('Mengalihkan ke mode Cetak PDF...', 'info');
+          window.print();
+        } finally {
+          btnPdf.disabled = false;
+        }
+      };
+
+      // 3. DOWNLOAD DOC (Microsoft Word .doc)
+      window.downloadDOC = function () {
+        if (!hasGeneratedContent) return;
+        if (isEditMode) toggleEditMode(false);
+
+        const contentHTML = document.getElementById('doc-output').innerHTML;
+        const filename = buildFileName('doc');
+
+        // Template XML/HTML standar Microsoft Word ukuran A4
+        const wordDocument = `
+          <html xmlns:o="urn:schemas-microsoft-com:office:office"
+                xmlns:w="urn:schemas-microsoft-com:office:word"
+                xmlns="http://www.w3.org/TR/REC-html40">
+          <head>
+            <meta charset="utf-8" />
+            <title>${filename}</title>
+            <!--[if gte mso 9]>
+            <xml>
+              <w:WordDocument>
+                <w:View>Print</w:View>
+                <w:Zoom>100</w:Zoom>
+                <w:DoNotOptimizeForBrowser/>
+              </w:WordDocument>
+            </xml>
+            <![endif]-->
+            <style>
+              @page Section1 {
+                size: 21.0cm 29.7cm;
+                margin: 2.0cm 2.0cm 2.0cm 2.0cm;
+                mso-header-margin: 1.0cm;
+                mso-footer-margin: 1.0cm;
+                mso-paper-source: 0;
+              }
+              div.Section1 { page: Section1; }
+              body {
+                font-family: "Times New Roman", Times, serif;
+                font-size: 11.5pt;
+                line-height: 1.5;
+                color: #000000;
+              }
+              h1 {
+                font-size: 14pt;
+                font-weight: bold;
+                text-align: center;
+                text-transform: uppercase;
+                margin-bottom: 6pt;
+              }
+              h2 {
+                font-size: 12pt;
+                font-weight: bold;
+                margin-top: 14pt;
+                margin-bottom: 6pt;
+                border-bottom: 1pt solid #000000;
+                padding-bottom: 2pt;
+              }
+              h3 {
+                font-size: 11.5pt;
+                font-weight: bold;
+                margin-top: 10pt;
+                margin-bottom: 4pt;
+              }
+              p {
+                margin-top: 0;
+                margin-bottom: 6pt;
+                text-align: justify;
+              }
+              ul, ol {
+                margin-top: 0;
+                margin-bottom: 8pt;
+              }
+              li {
+                margin-bottom: 3pt;
+              }
+              table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 8pt;
+                margin-bottom: 12pt;
+                font-size: 10.5pt;
+              }
+              th, td {
+                border: 1pt solid #000000;
+                padding: 5pt 6pt;
+                vertical-align: top;
+                text-align: left;
+              }
+              th {
+                background-color: #f1f5f9;
+                font-weight: bold;
+                text-align: center;
+              }
+              .signature-grid {
+                width: 100%;
+                margin-top: 24pt;
+              }
+              .signature-col {
+                display: inline-block;
+                width: 48%;
+                text-align: center;
+                vertical-align: top;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="Section1">
+              ${contentHTML}
+            </div>
+          </body>
+          </html>
+        `;
+
+        const blob = new Blob(['\ufeff', wordDocument], {
+          type: 'application/msword;charset=utf-8'
+        });
+
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        showToast(`File ${filename} berhasil diunduh!`, 'success');
+      };
+    })();
+  </script>
+</body>
+</html>
