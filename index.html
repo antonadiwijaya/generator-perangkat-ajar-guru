@@ -685,11 +685,10 @@
      * Konfigurasi Kunci Layanan (Tersimpan terenkripsi Base64 agar tidak tampil di frontend UI)
      */
     const _SVC_KEY_B64 = "QVEuQWI4Uk42SnloSnNKSHgxM0ZvQlFOWnlXWDFMdENLdktTdmJJc2ZQdEY4T1VmWEo5bEE=";
-    const _GEMINI_ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent";
 
     function _resolveServiceKey() {
       try {
-        return atob(_SVC_KEY_B64);
+        return atob(_SVC_KEY_B64).trim();
       } catch (e) {
         return "";
       }
@@ -781,44 +780,107 @@
       "Kolaborasi"
     ]);
 
-    /**
-     * Inisialisasi Halaman Saat Dimuat
-     */
-    window.addEventListener("DOMContentLoaded", () => {
-      loadIdentityFromStorage();
-      bindIdentityAutoSave();
-      updateFaseOptions();
-      renderDimensiChips();
-      renderSpecificOptions("MODUL_AJAR");
-    });
+    const DYNAMIC_OPTIONS_HTML = {
+      MODUL_AJAR: `
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">
+              Jumlah Pertemuan
+            </label>
+            <select id="opt-pertemuan" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 focus:border-teal-600 outline-none bg-white">
+              <option value="1 Pertemuan">1 Pertemuan</option>
+              <option value="2 Pertemuan" selected>2 Pertemuan</option>
+              <option value="3 Pertemuan">3 Pertemuan</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">
+              Penekanan Prinsip PM
+            </label>
+            <select id="opt-prinsip" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 focus:border-teal-600 outline-none bg-white">
+              <option value="Terpadu (Berkesadaran, Bermakna, Menggembirakan)" selected>Terpadu (3 Prinsip Lengkap)</option>
+              <option value="Eksplorasi Bermakna & Pemecahan Masalah Nyata">Eksplorasi Bermakna & Masalah Nyata</option>
+              <option value="Refleksi Berkesadaran & Kolaborasi Aktif">Refleksi Berkesadaran & Kolaborasi</option>
+            </select>
+          </div>
+        </div>
+      `,
+      MEDIA_AJAR: `
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">
+              Format Utama Media Ajar
+            </label>
+            <select id="opt-jenis-media" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 focus:border-teal-600 outline-none bg-white">
+              <option value="Rancangan Slide Presentasi Interaktif (8-10 Slide)" selected>Slide Presentasi Interaktif (8–10 Slide)</option>
+              <option value="Infografis Konsep, Peta Pikiran & Studi Kasus">Infografis Konsep & Studi Kasus</option>
+              <option value="Panduan Alat Peraga / Simulasi Praktik Kelas">Panduan Alat Peraga & Simulasi</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">
+              Gaya Penyajian
+            </label>
+            <select id="opt-gaya-media" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 focus:border-teal-600 outline-none bg-white">
+              <option value="Visual Naratif, Dialog Pemantik & Aktivitas Menggembirakan" selected>Visual Naratif & Pemantik</option>
+              <option value="Studi Kasus Kontekstual & Gamifikasi">Studi Kasus & Gamifikasi</option>
+              <option value="Demonstrasi Langkah demi Langkah">Demonstrasi Langkah demi Langkah</option>
+            </select>
+          </div>
+        </div>
+      `,
+      LKPD: `
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">
+              Jenis Aktivitas LKPD
+            </label>
+            <select id="opt-jenis-lkpd" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 focus:border-teal-600 outline-none bg-white">
+              <option value="Eksplorasi Konsep & Pemecahan Masalah Nyata" selected>Eksplorasi & Pemecahan Masalah</option>
+              <option value="Lembar Praktikum / Penyelidikan Ilmiah">Lembar Praktikum / Penyelidikan</option>
+              <option value="Lembar Kerja Berbasis Proyek Mini (PjBL)">Proyek Mini Kontekstual</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">
+              Pola Pengerjaan Peserta Didik
+            </label>
+            <select id="opt-pola-lkpd" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 focus:border-teal-600 outline-none bg-white">
+              <option value="Kelompok Kolaboratif (3-4 Peserta Didik)" selected>Kelompok Kolaboratif</option>
+              <option value="Mandiri / Individual">Mandiri / Individual</option>
+              <option value="Berpasangan (Think-Pair-Share)">Berpasangan (Think-Pair-Share)</option>
+            </select>
+          </div>
+        </div>
+      `,
+      SOAL: `
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">
+              Komposisi & Jumlah Soal
+            </label>
+            <select id="opt-komposisi-soal" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 focus:border-teal-600 outline-none bg-white">
+              <option value="10 Pilihan Ganda Kontekstual + 5 Uraian HOTS" selected>10 Pilihan Ganda + 5 Uraian HOTS</option>
+              <option value="15 Pilihan Ganda Literasi & Numerasi">15 Pilihan Ganda Literasi & Numerasi</option>
+              <option value="5 Studi Kasus Uraian Analitis + Rubrik">5 Studi Kasus Uraian + Rubrik</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">
+              Tingkat Kognitif
+            </label>
+            <select id="opt-level-soal" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 focus:border-teal-600 outline-none bg-white">
+              <option value="Proporsional LOTS (20%), MOTS (40%), HOTS C4-C6 (40%)" selected>Proporsional (LOTS, MOTS, HOTS)</option>
+              <option value="Dominan Penalaran Kritis & HOTS (C4-C6)">Dominan HOTS (C4–C6)</option>
+              <option value="Asesmen Diagnostik & Formatif Awal">Asesmen Formatif / Diagnostik</option>
+            </select>
+          </div>
+        </div>
+      `
+    };
 
     /**
-     * Menampilkan Notifikasi Toast Non-Blocking
-     */
-    function showToast(message, type = "info") {
-      const container = document.getElementById("toast-container");
-      const toast = document.createElement("div");
-
-      const colorClasses = {
-        success: "bg-emerald-800 text-white border-emerald-600",
-        error: "bg-rose-800 text-white border-rose-600",
-        info: "bg-navy-800 text-white border-navy-600"
-      };
-
-      toast.className = `pointer-events-auto px-4 py-3 rounded-xl shadow-lg border text-xs sm:text-sm font-medium flex items-center justify-between gap-3 animate-fade-up ${colorClasses[type] || colorClasses.info}`;
-      toast.innerHTML = `
-        <span>${message}</span>
-        <button type="button" onclick="this.parentElement.remove()" class="text-white/70 hover:text-white font-bold">✕</button>
-      `;
-      container.appendChild(toast);
-
-      setTimeout(() => {
-        if (toast.parentElement) toast.remove();
-      }, 4500);
-    }
-
-    /**
-     * Navigasi Kembali ke Halaman Utama (Beranda)
+     * Navigasi Kembali ke Halaman Beranda (4 Menu Utama)
      */
     function navigateHome() {
       document.getElementById("view-workspace").classList.add("hidden");
@@ -830,234 +892,156 @@
     }
 
     /**
-     * Membuka Halaman Workspace untuk Salah Satu dari 4 Menu Utama
+     * Membuka Halaman Generator Sesuai Menu Utama yang Dipilih
      */
     function openModule(moduleKey) {
+      if (!MODULE_META[moduleKey]) return;
       currentModule = moduleKey;
       const meta = MODULE_META[moduleKey];
 
-      // Tampilkan workspace, sembunyikan beranda
+      // Tampilkan Workspace, Sembunyikan Beranda
       document.getElementById("view-beranda").classList.add("hidden");
       document.getElementById("view-workspace").classList.remove("hidden");
 
       const headerActions = document.getElementById("header-actions");
       headerActions.classList.remove("hidden");
       headerActions.classList.add("flex");
+
+      // Perbarui Label Pill & Judul Form
       document.getElementById("active-menu-pill").textContent = meta.title;
-
-      // Update Tab Aktif
-      document.querySelectorAll(".menu-tab").forEach((btn) => {
-        const isActive = btn.getAttribute("data-tab") === moduleKey;
-        if (isActive) {
-          btn.className = "menu-tab flex-1 sm:flex-none px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold bg-navy-800 text-white shadow-sm transition-all";
-        } else {
-          btn.className = "menu-tab flex-1 sm:flex-none px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-600 hover:bg-slate-100 transition-all";
-        }
-      });
-
-      // Update Judul Form & Tombol Generate
       document.getElementById("form-spec-title").textContent = meta.formTitle;
       document.getElementById("btn-generate-text").textContent = meta.btnText;
 
+      // Perbarui Gaya Tab Aktif
+      document.querySelectorAll(".menu-tab").forEach((tab) => {
+        const isActive = tab.getAttribute("data-tab") === moduleKey;
+        if (isActive) {
+          tab.className =
+            "menu-tab flex-1 sm:flex-none px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all bg-navy-800 text-white shadow-sm";
+        } else {
+          tab.className =
+            "menu-tab flex-1 sm:flex-none px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all text-slate-600 hover:bg-slate-100";
+        }
+      });
+
       // Render Opsi Khusus Menu
-      renderSpecificOptions(moduleKey);
+      renderDynamicModuleOptions(moduleKey);
+
+      // Reset pratinjau jika berpindah jenis perangkat ajar
+      generatedDocHtml = "";
+      document.getElementById("preview-document-wrapper").classList.add("hidden");
+      document.getElementById("download-action-wrapper").classList.add("hidden");
+      document.getElementById("preview-loading").classList.add("hidden");
+      document.getElementById("preview-empty").classList.remove("hidden");
+      document.getElementById("preview-subtitle").textContent = `Tinjau hasil ${meta.title} sebelum mengunduh ke format Microsoft Word (.doc)`;
 
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
     /**
-     * Memperbarui Pilihan Fase & Kelas Berdasarkan Jenjang (PAUD/SD/SMP/SMA/SMK)
+     * Memperbarui Pilihan Fase/Kelas Berdasarkan Jenjang (PAUD/SD/SMP/SMA/SMK)
      */
     function updateFaseOptions() {
       const jenjang = document.getElementById("input-jenjang").value;
       const faseSelect = document.getElementById("input-fase");
       const smkContainer = document.getElementById("smk-field-container");
       const labelMapel = document.getElementById("label-mapel");
-      const inputMapel = document.getElementById("input-mapel");
+      const inputAlokasi = document.getElementById("input-alokasi");
 
-      const list = JENJANG_FASE_MAP[jenjang] || [];
-      faseSelect.innerHTML = list.map((item) => `<option value="${item}">${item}</option>`).join("");
+      const options = JENJANG_FASE_MAP[jenjang] || JENJANG_FASE_MAP.SD;
+      faseSelect.innerHTML = options
+        .map((opt) => `<option value="${escapeHtml(opt)}">${escapeHtml(opt)}</option>`)
+        .join("");
 
-      // Tampilkan kolom Konsentrasi Keahlian jika SMK dipilih
       if (jenjang === "SMK") {
         smkContainer.classList.remove("hidden");
       } else {
         smkContainer.classList.add("hidden");
       }
 
-      // Sesuaikan label Mata Pelajaran untuk PAUD
       if (jenjang === "PAUD") {
-        labelMapel.innerHTML = `Tema / Elemen Capaian PAUD <span class="text-rose-500">*</span>`;
-        inputMapel.placeholder = "Contoh: Aku Sayang Bumi / Nilai Agama & Budi Pekerti / Jati Diri";
+        labelMapel.innerHTML = 'Tema / Topik Pengembangan <span class="text-rose-500">*</span>';
+        inputAlokasi.value = "1 Minggu (5 Pertemuan @ 150 Menit)";
+      } else if (jenjang === "SD") {
+        labelMapel.innerHTML = 'Mata Pelajaran <span class="text-rose-500">*</span>';
+        inputAlokasi.value = "2 x 35 Menit (1 Pertemuan)";
+      } else if (jenjang === "SMP") {
+        labelMapel.innerHTML = 'Mata Pelajaran <span class="text-rose-500">*</span>';
+        inputAlokasi.value = "2 x 40 Menit (1 Pertemuan)";
       } else {
-        labelMapel.innerHTML = `Mata Pelajaran <span class="text-rose-500">*</span>`;
-        inputMapel.placeholder = "Contoh: IPAS / Matematika / Bahasa Indonesia / Informatika";
+        labelMapel.innerHTML = 'Mata Pelajaran <span class="text-rose-500">*</span>';
+        inputAlokasi.value = "2 x 45 Menit (1 Pertemuan)";
       }
     }
 
     /**
-     * Render Pilihan Interaktif 8 Dimensi Profil Lulusan
+     * Merender Pilihan 8 Dimensi Profil Lulusan (Pembelajaran Mendalam)
      */
-    function renderDimensiChips() {
+    function renderDimensiPills() {
       const container = document.getElementById("dimensi-container");
+      if (!container) return;
+
       container.innerHTML = DIMENSI_PROFIL_LULUSAN.map((dim) => {
         const active = selectedDimensi.has(dim);
+        const cls = active
+          ? "bg-teal-600 text-white border-teal-600 shadow-2xs"
+          : "bg-slate-50 text-slate-700 border-slate-300 hover:bg-slate-100";
         return `
           <button type="button" onclick="toggleDimensi('${dim.replace(/'/g, "\\'")}')"
-            class="px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border transition-all cursor-pointer ${
-              active
-                ? "bg-teal-600 text-white border-teal-600 shadow-2xs"
-                : "bg-slate-50 text-slate-600 border-slate-200 hover:border-teal-400"
-            }">
-            ${active ? "✓ " : "+ "}${dim}
+            class="px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-all cursor-pointer ${cls}">
+            ${active ? "✓ " : "+ "}${escapeHtml(dim)}
           </button>
         `;
       }).join("");
     }
 
-    function toggleDimensi(dim) {
-      if (selectedDimensi.has(dim)) {
+    function toggleDimensi(dimensi) {
+      if (selectedDimensi.has(dimensi)) {
         if (selectedDimensi.size > 1) {
-          selectedDimensi.delete(dim);
+          selectedDimensi.delete(dimensi);
         } else {
           showToast("Minimal pilih 1 Dimensi Profil Lulusan.", "info");
-          return;
         }
       } else {
-        selectedDimensi.add(dim);
+        selectedDimensi.add(dimensi);
       }
-      renderDimensiChips();
+      renderDimensiPills();
     }
 
     /**
-     * Render Input Khusus Berdasarkan Menu (MODUL_AJAR, MEDIA_AJAR, LKPD, SOAL)
+     * Merender Input Opsi Dinamis untuk Setiap Menu Utama
      */
-    function renderSpecificOptions(moduleKey) {
+    function renderDynamicModuleOptions(moduleKey) {
       const container = document.getElementById("dynamic-module-options");
-
-      if (moduleKey === "MODUL_AJAR") {
-        container.innerHTML = `
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">Jumlah Pertemuan</label>
-              <select id="opt-pertemuan" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 bg-white outline-none focus:border-teal-600">
-                <option value="1 Pertemuan">1 Pertemuan</option>
-                <option value="2 Pertemuan">2 Pertemuan</option>
-                <option value="3 Pertemuan">3 Pertemuan</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">Prinsip Utama Pembelajaran Mendalam</label>
-              <select id="opt-prinsip" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 bg-white outline-none focus:border-teal-600">
-                <option value="Terpadu (Berkesadaran, Bermakna, & Menggembirakan)">Terpadu (Berkesadaran, Bermakna, Menggembirakan)</option>
-                <option value="Fokus Eksplorasi Bermakna & Pemecahan Masalah Nyata">Fokus Eksplorasi Bermakna & Masalah Nyata</option>
-                <option value="Fokus Aktivitas Menggembirakan & Gamifikasi Edukatif">Fokus Aktivitas Menggembirakan & Gamifikasi</option>
-              </select>
-            </div>
-          </div>
-        `;
-      } else if (moduleKey === "MEDIA_AJAR") {
-        container.innerHTML = `
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">Jenis Media Ajar</label>
-              <select id="opt-jenis-media" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 bg-white outline-none focus:border-teal-600">
-                <option value="Naskah Slide Presentasi Interaktif (10–12 Slide)">Slide Presentasi Interaktif (Per Slide)</option>
-                <option value="Peta Konsep, Infografis Teks & Ringkasan Visual">Peta Konsep & Ringkasan Visual</option>
-                <option value="Modul Bahan Bacaan Kontekstual & Studi Kasus">Bahan Bacaan Kontekstual & Studi Kasus</option>
-                <option value="Skenario Video Pembelajaran & Simulasi Digital">Skenario Video & Simulasi Interaktif</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">Pendekatan Penyajian</label>
-              <select id="opt-gaya-media" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 bg-white outline-none focus:border-teal-600">
-                <option value="Visual Naratif, Pertanyaan Pemantik & Aktivitas Kelas">Visual Naratif & Pertanyaan Pemantik</option>
-                <option value="Studi Kasus Nyata Lingkungan Sekitar">Studi Kasus Nyata Lingkungan Sekitar</option>
-                <option value="Interaktif Berbasis Kuis & Tantangan Kelompok">Interaktif Berbasis Tantangan Kelompok</option>
-              </select>
-            </div>
-          </div>
-        `;
-      } else if (moduleKey === "LKPD") {
-        container.innerHTML = `
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">Jenis Aktivitas LKPD</label>
-              <select id="opt-jenis-lkpd" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 bg-white outline-none focus:border-teal-600">
-                <option value="Eksplorasi & Pemecahan Masalah Nyata (PBL)">Eksplorasi & Pemecahan Masalah Nyata</option>
-                <option value="Proyek Kolaboratif & Pembuatan Produk (PjBL)">Proyek Kolaboratif & Pembuatan Produk</option>
-                <option value="Praktikum / Observasi & Analisis Data">Praktikum / Observasi & Analisis Data</option>
-                <option value="Lembar Aktivitas Bermain & Eksplorasi (PAUD/SD Awal)">Aktivitas Bermain & Eksplorasi (PAUD/SD Awal)</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">Pola Pengerjaan Siswa</label>
-              <select id="opt-pola-lkpd" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 bg-white outline-none focus:border-teal-600">
-                <option value="Kelompok Kolaboratif (3–5 Peserta Didik)">Kelompok Kolaboratif (3–5 Siswa)</option>
-                <option value="Individu Mandiri">Individu Mandiri</option>
-                <option value="Berpasangan (Think-Pair-Share)">Berpasangan (Think-Pair-Share)</option>
-              </select>
-            </div>
-          </div>
-        `;
-      } else if (moduleKey === "SOAL") {
-        container.innerHTML = `
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">Jenis & Komposisi Soal</label>
-              <select id="opt-komposisi-soal" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 bg-white outline-none focus:border-teal-600">
-                <option value="10 Pilihan Ganda + 5 Uraian HOTS">10 Pilihan Ganda + 5 Uraian HOTS</option>
-                <option value="15 Pilihan Ganda Kontekstual (AKM)">15 Pilihan Ganda Kontekstual (Model AKM)</option>
-                <option value="5 Pilihan Ganda + 5 Pilihan Ganda Kompleks + 5 Uraian">5 PG + 5 PG Kompleks + 5 Uraian</option>
-                <option value="5 Soal Studi Kasus Mendalam & Rubrik">5 Soal Studi Kasus Mendalam & Rubrik</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 mb-1">Level Kognitif & Kelengkapan</label>
-              <select id="opt-level-soal" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-300 bg-white outline-none focus:border-teal-600">
-                <option value="Proporsional MOTS & HOTS (C3–C6) + Kisi-Kisi & Kunci Jawaban">MOTS & HOTS (C3–C6) + Kisi-Kisi & Kunci</option>
-                <option value="Fokus Penalaran Kritis HOTS (C4–C6) + Kisi-Kisi & Kunci Jawaban">Fokus Penalaran Kritis HOTS (C4–C6)</option>
-                <option value="Asesmen Diagnostik & Formatif Awal + Rubrik Observasi">Asesmen Formatif Awal + Rubrik Observasi</option>
-              </select>
-            </div>
-          </div>
-        `;
+      if (container) {
+        container.innerHTML = DYNAMIC_OPTIONS_HTML[moduleKey] || "";
       }
     }
 
     /**
-     * Penyimpanan Otomatis Identitas Guru, Kepala Sekolah, & Sekolah ke LocalStorage
+     * Simpan & Muat Data Identitas Guru, Kepala Sekolah & Sekolah Otomatis
      */
-    const STORAGE_KEY = "perangkat_ajar_pm_identitas_v1";
-
-    function bindIdentityAutoSave() {
-      document.querySelectorAll(".identity-field").forEach((el) => {
-        el.addEventListener("input", saveIdentityToStorage);
-        el.addEventListener("change", saveIdentityToStorage);
-      });
-    }
-
     function saveIdentityToStorage() {
-      const data = {
-        sekolah: document.getElementById("input-sekolah").value,
-        kota: document.getElementById("input-kota").value,
-        tapel: document.getElementById("input-tapel").value,
-        semester: document.getElementById("input-semester").value,
-        guru: document.getElementById("input-guru").value,
-        nipGuru: document.getElementById("input-nip-guru").value,
-        kepsek: document.getElementById("input-kepsek").value,
-        nipKepsek: document.getElementById("input-nip-kepsek").value
-      };
       try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        const data = {
+          sekolah: document.getElementById("input-sekolah").value,
+          kota: document.getElementById("input-kota").value,
+          tapel: document.getElementById("input-tapel").value,
+          semester: document.getElementById("input-semester").value,
+          guru: document.getElementById("input-guru").value,
+          nipGuru: document.getElementById("input-nip-guru").value,
+          kepsek: document.getElementById("input-kepsek").value,
+          nipKepsek: document.getElementById("input-nip-kepsek").value
+        };
+        localStorage.setItem("perangkat_ajar_identity_v1", JSON.stringify(data));
       } catch (e) {
-        // Abaikan jika storage dibatasi
+        // Abaikan jika storage dibatasi browser
       }
     }
 
     function loadIdentityFromStorage() {
       try {
-        const raw = localStorage.getItem(STORAGE_KEY);
+        const raw = localStorage.getItem("perangkat_ajar_identity_v1");
         if (!raw) return;
         const data = JSON.parse(raw);
         if (data.sekolah) document.getElementById("input-sekolah").value = data.sekolah;
@@ -1069,205 +1053,265 @@
         if (data.kepsek) document.getElementById("input-kepsek").value = data.kepsek;
         if (data.nipKepsek) document.getElementById("input-nip-kepsek").value = data.nipKepsek;
       } catch (e) {
-        // Abaikan jika error parsing
+        // Abaikan error parsing
       }
     }
 
+    /**
+     * Mengisi Contoh Data Identitas & Materi untuk Uji Coba Cepat
+     */
     function fillSampleIdentity() {
-      document.getElementById("input-sekolah").value = "SMA Negeri 1 Cendekia Nusantara";
+      document.getElementById("input-sekolah").value = "SD Negeri 01 Nusantara";
       document.getElementById("input-kota").value = "Bandung";
       document.getElementById("input-tapel").value = "2026/2027";
       document.getElementById("input-semester").value = "Ganjil";
       document.getElementById("input-guru").value = "Anton Adiwijaya, S.Pd.";
       document.getElementById("input-nip-guru").value = "19880512 201503 1 004";
       document.getElementById("input-kepsek").value = "Drs. H. Ahmad Fauzi, M.Pd.";
-      document.getElementById("input-nip-kepsek").value = "19710914 199702 1 001";
+      document.getElementById("input-nip-kepsek").value = "19720817 199802 1 002";
+
+      if (!document.getElementById("input-mapel").value.trim()) {
+        document.getElementById("input-mapel").value = "Ilmu Pengetahuan Alam dan Sosial (IPAS)";
+      }
+      if (!document.getElementById("input-topik").value.trim()) {
+        document.getElementById("input-topik").value = "Perubahan Wujud Zat dan Pemanfaatannya dalam Kehidupan Sehari-hari";
+      }
+
       saveIdentityToStorage();
-      showToast("Contoh data sekolah, guru, dan kepala sekolah berhasil diisikan.", "success");
+      showToast("Contoh data identitas sekolah, kepala sekolah, dan guru berhasil diisi.", "success");
     }
 
     /**
-     * Format Tanggal Bahasa Indonesia untuk Titimangsa Pengesahan
+     * Notifikasi Toast Non-Blocking (Pengganti alert)
+     */
+    function showToast(message, type = "info") {
+      const container = document.getElementById("toast-container");
+      if (!container) return;
+
+      const colorMap = {
+        success: "bg-emerald-900 text-white border-emerald-700",
+        error: "bg-rose-900 text-white border-rose-700",
+        info: "bg-navy-900 text-white border-navy-700"
+      };
+
+      const toast = document.createElement("div");
+      toast.className = `pointer-events-auto px-4 py-3 rounded-xl border shadow-lg text-xs sm:text-sm font-medium transition-all animate-fade-up ${colorMap[type] || colorMap.info}`;
+      toast.textContent = message;
+
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = "0";
+        toast.style.transform = "translateY(-6px)";
+        setTimeout(() => toast.remove(), 300);
+      }, 4200);
+    }
+
+    /**
+     * Format Tanggal Indonesia untuk Titimangsa Pengesahan Dokumen
      */
     function getIndonesianDateString() {
-      const months = [
+      const bulan = [
         "Januari", "Februari", "Maret", "April", "Mei", "Juni",
         "Juli", "Agustus", "September", "Oktober", "November", "Desember"
       ];
       const now = new Date();
-      return `${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+      return `${now.getDate()} ${bulan[now.getMonth()]} ${now.getFullYear()}`;
     }
 
     /**
-     * Membangun System Instruction & User Prompt Spesifik Pembelajaran Mendalam
+     * Menyusun System Instruction & User Prompt Sesuai Kerangka Pembelajaran Mendalam
      */
     function buildPrompts(formData) {
-      const systemInstruction = `Anda adalah Pakar Pengembang Kurikulum Merdeka dan Pembelajaran Mendalam (Deep Learning) Kemendikdasmen Republik Indonesia yang sangat berpengalaman di semua jenjang pendidikan (PAUD, SD/MI, SMP/MTs, SMA/MA, dan SMK/MAK).
+      const systemInstruction = `
+Anda adalah Pakar Pengembang Kurikulum Merdeka dan Pedagogi Pembelajaran Mendalam (Deep Learning) Kemendikdasmen Republik Indonesia untuk semua jenjang (PAUD, SD, SMP, SMA, SMK).
+Tugas Anda menyusun dokumen perangkat ajar resmi berbahasa Indonesia yang sangat sistematis, operasional, mendalam, dan siap dicetak ke Microsoft Word (.doc).
 
-Tugas Anda adalah menyusun perangkat ajar resmi berkualitas tinggi, mendalam, kontekstual, dan siap digunakan oleh guru di kelas sesuai regulasi Kurikulum Merdeka terbaru (Permendikdasmen tentang Pembelajaran Mendalam).
+ATURAN FORMAT KELUARAN (WAJIB DIPATUHI):
+1. Keluarkan HANYA fragmen HTML bersih (tanpa tag <html>, <head>, <body>, tanpa blok markdown \`\`\`html, dan tanpa kata pengantar/penutup di luar dokumen).
+2. Jangan ulangi Kop Dokumen, Tabel Identitas Umum, maupun Blok Tanda Tangan Pengesahan (karena bagian tersebut sudah dirakit otomatis oleh sistem). Langsung mulai dari bagian isi utama dokumen menggunakan tag <h2>, <h3>, <p>, <ul>, <ol>, dan <table>.
+3. Gunakan tabel HTML terstruktur dengan header <th> yang jelas agar sangat rapi saat dikonversi ke Microsoft Word.
+4. Integrasikan secara nyata prinsip Pembelajaran Mendalam:
+   - Prinsip Pembelajaran: Berkesadaran (mindful), Bermakna (meaningful), dan Menggembirakan (joyful).
+   - Pengalaman Belajar: Memahami, Mengaplikasi, dan Merefleksi.
+   - Kerangka Pembelajaran: Praktik Pedagogis, Lingkungan Pembelajaran, Kemitraan Pembelajaran, dan Pemanfaatan Digital.
+   - 8 Dimensi Profil Lulusan sesuai yang dipilih guru.
+   - Sesuaikan kedalaman bahasa dan aktivitas dengan karakteristik usia peserta didik pada jenjang ${formData.jenjang} (${formData.fase}).
+      `.trim();
 
-ATURAN FORMAT OUTPUT (SANGAT PENTING):
-1. Keluarkan HANYA kode HTML semantik bersih (gunakan tag <h2>, <h3>, <h4>, <p>, <ul>, <ol>, <li>, <table>, <thead>, <tbody>, <tr>, <th>, <td>, <strong>, <em>).
-2. JANGAN gunakan blok markdown (\`\`\`html atau \`\`\`), JANGAN sertakan tag <html>, <head>, atau <body>.
-3. JANGAN ulangi Kop Dokumen, Tabel Identitas Utama, atau Blok Tanda Tangan Pengesahan di akhir karena bagian tersebut sudah dibuat otomatis oleh sistem template dokumen. Langsung mulai dari Bagian I / Komponen Inti perangkat ajar.
-4. Gunakan bahasa Indonesia baku yang pedagogis, jelas, operasional, dan aplikatif untuk guru.
-5. Integrasikan secara eksplisit kerangka **Pembelajaran Mendalam (Deep Learning)**:
-   - **3 Prinsip Pembelajaran**: Berkesadaran (*Mindful*), Bermakna (*Meaningful*), dan Menggembirakan (*Joyful*).
-   - **3 Pengalaman Belajar**: Memahami (mengonstruksi pengetahuan esensial, aplikatif, serta nilai & karakter), Mengaplikasi (menerapkan pengetahuan secara kontekstual untuk memecahkan masalah nyata), dan Merefleksi (mengevaluasi & memaknai proses dan hasil belajar).
-   - **8 Dimensi Profil Lulusan**: Keimanan & Ketakwaan terhadap Tuhan YME, Kewargaan, Penalaran Kritis, Kreativitas, Kolaborasi, Kemandirian, Kesehatan, dan Komunikasi.
-   - **4 Kerangka Pembelajaran**: Praktik Pedagogis, Kemitraan Pembelajaran, Lingkungan Pembelajaran, dan Pemanfaatan Teknologi Digital.`;
+      const baseContext = `
+Konteks Perangkat Ajar:
+- Satuan Pendidikan: ${formData.sekolah}
+- Jenjang & Fase/Kelas: ${formData.jenjang} (${formData.fase})
+${formData.jenjang === "SMK" && formData.keahlian ? `- Program/Konsentrasi Keahlian SMK: ${formData.keahlian}` : ""}
+- Mata Pelajaran / Tema: ${formData.mapel}
+- Topik / Materi Pokok: ${formData.topik}
+- Alokasi Waktu: ${formData.alokasi}
+- Model Pembelajaran: ${formData.model}
+- Dimensi Profil Lulusan Fokus: ${formData.dimensi.join(", ")}
+- Capaian Pembelajaran / Konteks Khusus: ${formData.cp || "Rumuskan secara akurat sesuai Capaian Pembelajaran Kurikulum Merdeka terbaru untuk fase ini."}
+      `.trim();
 
-      let specificPrompt = "";
+      let specificTask = "";
 
       if (formData.moduleKey === "MODUL_AJAR") {
-        specificPrompt = `Susun **MODUL AJAR PEMBELAJARAN MENDALAM** (bukan RPP singkat, melainkan Modul Ajar Pembelajaran Mendalam yang komprehensif) dengan struktur wajib berikut:
-<h2>I. IDENTIFIKASI PESERTA DIDIK & MATERI</h2>
-- Analisis Kesiapan Awal Peserta Didik (asesmen awal & diferensiasi kebutuhan belajar).
-- Karakteristik Materi Pelajaran (pengetahuan esensial, aplikatif, serta nilai & karakter yang terkandung).
-- Integrasi Dimensi Profil Lulusan yang dipilih: ${formData.dimensi.join(", ")} (jelaskan perilaku teramati pada setiap dimensi).
-
-<h2>II. DESAIN PEMBELAJARAN MENDALAM</h2>
-- Capaian Pembelajaran (CP) sesuai Fase ${formData.fase} Kurikulum Merdeka terbaru.
-- Topik Pembelajaran Kontekstual & Relevansi Lintas Disiplin Ilmu.
-- Tujuan Pembelajaran (TP) yang terukur (mengandung kompetensi dan lingkup materi mendalam) & Alur Tujuan Pembelajaran singkat.
-- Tabel **Kerangka Pembelajaran** (4 aspek: 1. Praktik Pedagogis [${formData.model}], 2. Kemitraan Pembelajaran, 3. Lingkungan Pembelajaran yang aman & saling memuliakan, 4. Pemanfaatan Teknologi Digital).
-
-<h2>III. PENGALAMAN BELAJAR (LANGKAH-LANGKAH PEMBELAJARAN)</h2>
-Susun rincian kegiatan untuk **${formData.opt1}** (${formData.alokasi}) dengan fokus **${formData.opt2}** dalam bentuk tabel atau subbagian terstruktur yang memuat:
-1. **Kegiatan Awal (Pendahuluan)** — Orientasi bermakna, apersepsi kontekstual, asesmen awal singkat, dan motivasi menggembirakan (cantumkan estimasi waktu).
-2. **Kegiatan Inti (Alur Pengalaman Belajar Mendalam)** — Rincikan langkah nyata guru dan aktivitas aktif siswa pada 3 tahapan:
-   - **Tahap 1: Memahami** (tandai penerapan prinsip *Berkesadaran / Bermakna / Menggembirakan*)
-   - **Tahap 2: Mengaplikasi** (tandai penerapan prinsip *Berkesadaran / Bermakna / Menggembirakan*)
-   - **Tahap 3: Merefleksi** (tandai penerapan prinsip *Berkesadaran / Bermakna / Menggembirakan*)
-3. **Kegiatan Penutup** — Penyimpulan kolaboratif, umpan balik konstruktif, dan tindak lanjut pembelajaran bermakna.
-
-<h2>IV. ASESMEN PEMBELAJARAN & RUBRIK PENILAIAN</h2>
-- Asesmen pada Awal Pembelajaran (Diagnostik Kognitif & Non-Kognitif).
-- Asesmen pada Proses Pembelajaran (Observasi Diskusi, Kinerja, & Sikap Profil Lulusan).
-- Asesmen pada Akhir Pembelajaran (Sumatif Lingkup Materi).
-- Sertakan **Tabel Rubrik Penilaian Kinerja/Pemahaman Mendalam** dengan 4 kriteria skala (Perlu Bimbingan, Cukup, Baik, Sangat Baik).
-- Sertakan **Pengayaan dan Remedial** serta **Refleksi Guru dan Peserta Didik**.`;
+        specificTask = `
+Susun isi **MODUL AJAR PEMBELAJARAN MENDALAM** (Jumlah Pertemuan: ${formData.opt1}, Penekanan: ${formData.opt2}) dengan struktur bab berikut:
+<h2>A. IDENTIFIKASI PESERTA DIDIK & MATERI PELAJARAN</h2>
+(Uraikan kesiapan belajar peserta didik, karakteristik materi esensial, serta relevansi nyata dengan kehidupan sehari-hari).
+<h2>B. DESAIN PEMBELAJARAN</h2>
+(Meliputi: 1. Capaian Pembelajaran, 2. Lintas Disiplin Ilmu, 3. Tujuan Pembelajaran yang terukur, 4. Praktik Pedagogis, 5. Kemitraan Pembelajaran, 6. Lingkungan Pembelajaran, 7. Pemanfaatan Digital).
+<h2>C. PENGALAMAN BELAJAR (LANGKAH-LANGKAH PEMBELAJARAN MENDALAM)</h2>
+(Sajikan dalam bentuk tabel terperinci per tahapan: Kegiatan Awal [Berkesadaran & Menggembirakan], Kegiatan Inti yang memuat siklus **Memahami**, **Mengaplikasi**, dan **Merefleksi** secara eksplisit sesuai sintaks ${formData.model}, serta Kegiatan Penutup, lengkap dengan estimasi waktu).
+<h2>D. ASESMEN PEMBELAJARAN</h2>
+(Meliputi Asesmen Awal/Diagnostik, Asesmen Proses/Formatif berbasis observasi/kinerja, dan Asesmen Akhir/Sumatif beserta rubrik penilaian singkat).
+<h2>E. PENGAYAAN, REMEDIAL, DAN REFLEKSI GURU</h2>
+        `.trim();
       } else if (formData.moduleKey === "MEDIA_AJAR") {
-        specificPrompt = `Susun **PERANGKAT MEDIA AJAR & BAHAN TAYANG PEMBELAJARAN MENDALAM** dengan spesifikasi:
-- Jenis Media: **${formData.opt1}**
-- Pendekatan Penyajian: **${formData.opt2}**
-
-Struktur wajib yang harus dihasilkan:
-<h2>I. RANCANGAN KONSEPTUAL MEDIA AJAR</h2>
-- Tujuan Penggunaan Media Ajar dan keselarasan dengan prinsip *Berkesadaran, Bermakna, dan Menggembirakan*.
-- Integrasi Dimensi Profil Lulusan: ${formData.dimensi.join(", ")}.
-- Alat, Bahan, dan Pemanfaatan Teknologi Digital yang diperlukan guru di kelas.
-
-<h2>II. PETA KONSEP & ALUR VISUAL MATERI</h2>
-- Buat bagan terstruktur (dalam bentuk tabel alur konsep) yang menghubungkan konsep esensial, contoh nyata dalam kehidupan sehari-hari, hingga penerapan solusi atas masalah kontekstual.
-
-<h2>III. KONTEN UTAMA MEDIA AJAR (${formData.opt1})</h2>
-- Jika berbentuk Slide Presentasi, buatkan rincian lengkap **10 hingga 12 Slide** dalam format tabel/kartu terstruktur yang berisi: Nomor & Judul Slide, Konten Teks Utama di Layar, Deskripsi Ilustrasi/Visual/Infografis yang ditampilkan, serta Catatan Narasi & Pertanyaan Pemantik Guru untuk membangun pengalaman *Memahami, Mengaplikasi, dan Merefleksi*.
-- Jika berbentuk Bahan Bacaan/Infografis/Skenario, tuliskan naskah lengkapnya secara utuh, menarik, komunikatif sesuai usia peserta didik jenjang ${formData.jenjang} (${formData.fase}), dilengkapi studi kasus nyata dan aktivitas pemantik diskusi.
-
-<h2>IV. PANDUAN PENGGUNAAN MEDIA DALAM PEMBELAJARAN MENDALAM</h2>
-- Langkah teknis guru menggunakan media pada tahap *Memahami*, *Mengaplikasi*, dan *Merefleksi*, serta alternatif adaptasi media jika fasilitas digital terbatas.`;
+        specificTask = `
+Susun dokumen **PERANGKAT MEDIA AJAR & BAHAN TAYANG INTERAKTIF** (Format: ${formData.opt1}, Gaya Penyajian: ${formData.opt2}) dengan struktur lengkap berikut:
+<h2>A. KONSEP & TUJUAN MEDIA AJAR PEMBELAJARAN MENDALAM</h2>
+(Jelaskan bagaimana media ini menumbuhkan suasana Berkesadaran, Bermakna, dan Menggembirakan).
+<h2>B. PETA KONSEP & RINGKASAN MATERI ESENSIAL</h2>
+(Uraikan materi inti secara runtut, komunikatif, dan mudah dipahami peserta didik jenjang ${formData.jenjang}).
+<h2>C. RANCANGAN STORYBOARD / SLIDE BAHAN TAYANG INTERAKTIF</h2>
+(Sajikan dalam tabel lengkap berisi kolom: No. Slide/Bagian, Judul Tampilan, Konten Teks & Visual/Ilustrasi yang Disarankan, Pertanyaan Pemantik / Aktivitas Interaktif Siswa, dan Prinsip PM [Berkesadaran/Bermakna/Menggembirakan]).
+<h2>D. STUDI KASUS PEMANTIK & AKTIVITAS ICE BREAKING EDUKATIF</h2>
+(Berikan 1 skenario studi kasus nyata dan 1 permainan/aktivitas singkat yang menggembirakan terkait topik).
+<h2>E. PANDUAN PENGGUNAAN MEDIA BAGI GURU</h2>
+        `.trim();
       } else if (formData.moduleKey === "LKPD") {
-        specificPrompt = `Susun **LEMBAR KERJA PESERTA DIDIK (LKPD) BERBASIS PEMBELAJARAN MENDALAM** yang siap dicetak dan dibagikan langsung kepada siswa dengan spesifikasi:
-- Jenis Aktivitas LKPD: **${formData.opt1}**
-- Pola Pengerjaan: **${formData.opt2}**
-
-Struktur wajib yang harus dihasilkan:
-<h2>I. INFORMASI & PETUNJUK BELAJAR PESERTA DIDIK</h2>
-- Kotak Isian Identitas Kelompok / Peserta Didik (Nama Kelompok, Anggota, Kelas, Tanggal) dalam bentuk tabel rapi.
-- Tujuan Pembelajaran yang akan dicapai siswa (bahasa ramah siswa sesuai jenjang ${formData.jenjang} - ${formData.fase}).
-- Dimensi Profil Lulusan yang dikembangkan: ${formData.dimensi.join(", ")}.
-- Petunjuk Pengerjaan LKPD dengan pendekatan *Berkesadaran, Bermakna, dan Menggembirakan*.
-
-<h2>II. STIMULUS KONTEKSTUAL & PEMANTIK RASA INGIN TAHU</h2>
-- Sajikan fenomena nyata, cerita kontekstual, atau studi kasus relevan di lingkungan sekitar siswa terkait topik "${formData.topik}", diikuti 3 pertanyaan pemantik awal.
-
-<h2>III. AKTIVITAS INTI PEMBELAJARAN MENDALAM</h2>
-Susun instruksi kerja dan tabel/ruang isian jawaban siswa secara sistematis dalam 3 tahap:
-1. **Aktivitas 1: Tahap MEMAHAMI (Eksplorasi Konsep)** — Tugas menganalisis sumber/fenomena dan mengonstruksi pemahaman konsep esensial.
-2. **Aktivitas 2: Tahap MENGAPLIKASI (Pemecahan Masalah / Proyek Nyata)** — Langkah kerja penyelidikan, eksperimen/diskusi, dan tabel pengamatan atau lembar perancangan solusi nyata.
-3. **Aktivitas 3: Tahap MEREFLEKSI (Evaluasi Diri & Makna Belajar)** — Pertanyaan reflektif mendalam (Apa yang saya pahami? Bagaimana manfaatnya dalam kehidupan nyata? Apa tantangan yang berhasil saya atasi?).
-
-<h2>IV. RUBRIK PENILAIAN LKPD (UNTUK GURU)</h2>
-- Tabel rubrik penilaian proses dan hasil kerja LKPD dengan indikator jelas dan skala skor 1–4.`;
-      } else if (formData.moduleKey === "SOAL") {
-        specificPrompt = `Susun **INSTRUMEN ASESMEN & SOAL EVALUASI PEMBELAJARAN MENDALAM** yang lengkap, valid, dan siap diujikan dengan spesifikasi:
-- Komposisi & Bentuk Soal: **${formData.opt1}**
-- Level Kognitif & Kelengkapan: **${formData.opt2}**
-
-Struktur wajib yang harus dihasilkan:
-<h2>I. KISI-KISI PENULISAN SOAL ASESMEN</h2>
-- Buat tabel kisi-kisi lengkap dengan kolom: No, Tujuan Pembelajaran / Indikator Pencapaian Kompetensi, Materi Pokok, Indikator Soal, Level Kognitif (C1–C6 / LOTS-MOTS-HOTS), Dimensi Profil Lulusan, Bentuk Soal, dan Nomor Soal.
-
-<h2>II. NASKAH SOAL ASESMEN</h2>
-- Tuliskan petunjuk umum pengerjaan soal bagi peserta didik jenjang ${formData.jenjang} (${formData.fase}).
-- Susun butir-butir soal sesuai komposisi **${formData.opt1}** secara lengkap dan bernomor urut.
-- Pastikan soal HOTS diawali dengan **stimulus kontekstual** (wacana singkat, data tabel, fenomena kehidupan nyata, atau studi kasus) yang menguji penalaran kritis dan literasi/numerasi sesuai jenjang usia siswa.
-- Untuk soal Pilihan Ganda, sertakan opsi jawaban lengkap (A, B, C, D, atau E sesuai jenjang; untuk PAUD/SD awal sesuaikan tingkat kesulitannya).
-
-<h2>III. KUNCI JAWABAN, PEMBAHASAN & PEDOMAN PENSKORAN</h2>
-- Tabel Kunci Jawaban lengkap beserta pembahasan singkat untuk setiap soal.
-- Pedoman Penskoran, rumus perhitungan nilai akhir (Skala 0–100), serta kriteria ketuntasan dan tindak lanjut hasil asesmen.`;
+        specificTask = `
+Susun **LEMBAR KERJA PESERTA DIDIK (LKPD)** yang siap dicetak dan dibagikan ke siswa (Jenis Aktivitas: ${formData.opt1}, Pola Pengerjaan: ${formData.opt2}) dengan struktur berikut:
+<h2>A. IDENTITAS KELOMPOK / PESERTA DIDIK & PETUNJUK BELAJAR</h2>
+(Sertakan kotak/tabel isian Nama Anggota Kelompok/Siswa, Kelas, Tanggal, Tujuan Pembelajaran, serta petunjuk pengerjaan yang ramah siswa).
+<h2>B. STIMULUS & PEMANTIK RASA INGIN TAHU (BERKESADARAN & BERMAKNA)</h2>
+(Sajikan cerita kontekstual, fenomena nyata, atau permasalahan sehari-hari sesuai topik ${formData.topik} beserta 2–3 pertanyaan pemantik awal).
+<h2>C. AKTIVITAS 1: TAHAP MEMAHAMI (EKSPLORASI KONSEP)</h2>
+(Tugas terstruktur untuk membangun pemahaman konsep dasar dengan ruang/tabel jawaban bagi siswa).
+<h2>D. AKTIVITAS 2: TAHAP MENGAPLIKASI (KOLABORASI & PEMECAHAN MASALAH)</h2>
+(Tugas penyelidikan/proyek mini/analisis kasus nyata yang menuntut penalaran kritis dan kreativitas, lengkap dengan tabel pengamatan atau langkah kerja).
+<h2>E. AKTIVITAS 3: TAHAP MEREFLEKSI (REFLEKSI DIRI & BERBAGI MAKNA)</h2>
+(Pertanyaan refleksi kesadaran belajar siswa: apa yang dipahami, tantangan yang dihadapi, dan manfaatnya dalam kehidupan nyata).
+<h2>F. RUBRIK PENILAIAN LKPD (UNTUK GURU)</h2>
+        `.trim();
+      } else {
+        specificTask = `
+Susun **INSTRUMEN ASESMEN & SOAL EVALUASI PEMBELAJARAN MENDALAM** (Komposisi: ${formData.opt1}, Tingkat Kognitif: ${formData.opt2}) dengan struktur lengkap berikut:
+<h2>A. KISI-KISI PENULISAN SOAL</h2>
+(Sajikan dalam tabel lengkap berisi: No. Soal, Tujuan Pembelajaran / Indikator Pencapaian, Materi Pokok, Level Kognitif [LOTS/MOTS/HOTS], Bentuk Soal, dan Nomor Soal).
+<h2>B. NASKAH SOAL ASESMEN (BERBASIS LITERASI, NUMERASI & KONTEKS NYATA)</h2>
+(Tulis seluruh butir soal secara lengkap dan jelas. Untuk soal HOTS, sertakan stimulus bacaan/data/studi kasus singkat sebelum pertanyaan. Untuk Pilihan Ganda sertakan opsi A, B, C, D [dan E khusus SMA/SMK]).
+<h2>C. KUNCI JAWABAN & PEMBAHASAN SINGKAT</h2>
+(Sajikan kunci jawaban lengkap untuk seluruh butir soal).
+<h2>D. PEDOMAN PENSKORAN & KONVERSI NILAI</h2>
+(Sertakan rubrik penskoran soal pilihan ganda maupun uraian serta rumus perhitungan nilai akhir dan tindak lanjut ketuntasan).
+        `.trim();
       }
 
-      const userPrompt = `Buatlah perangkat ajar dengan data lengkap berikut:
-- **Satuan Pendidikan**: ${formData.sekolah}
-- **Jenjang Pendidikan**: ${formData.jenjang}
-- **Fase & Kelas**: ${formData.fase}
-${formData.jenjang === "SMK" && formData.keahlian ? `- **Program/Konsentrasi Keahlian SMK**: ${formData.keahlian}\n` : ""}- **Mata Pelajaran / Tema**: ${formData.mapel}
-- **Topik / Materi Pokok**: ${formData.topik}
-- **Alokasi Waktu**: ${formData.alokasi}
-- **Model Pembelajaran**: ${formData.model}
-- **Dimensi Profil Lulusan**: ${formData.dimensi.join(", ")}
-${formData.cp ? `- **Capaian Pembelajaran / Konteks Tambahan dari Guru**: ${formData.cp}\n` : ""}
-${specificPrompt}`;
-
-      return { systemInstruction, userPrompt };
+      return {
+        systemInstruction,
+        userPrompt: `${baseContext}\n\n${specificTask}`
+      };
     }
 
     /**
-     * Pemanggilan Gemini API Otomatis dengan Exponential Backoff & Fallback Tangguh
+     * Pemanggilan Layanan AI Otomatis (Mendukung Vertex AI Express AQ.* & Gemini API)
+     * dengan Exponential Backoff & Multi-Endpoint Fallback
      */
     async function callGeminiAPI(systemInstruction, userPrompt) {
-      const primaryKey = _resolveServiceKey();
-      const candidateKeys = primaryKey ? [primaryKey, ""] : [""];
+      const serviceKey = _resolveServiceKey();
 
-      const payload = {
-        contents: [{ parts: [{ text: userPrompt }] }],
-        systemInstruction: {
-          parts: [{ text: systemInstruction }]
+      // Daftar endpoint terurut: Vertex AI Express (untuk key awalan AQ.*) lalu Gemini API
+      const endpoints = [];
+      if (serviceKey) {
+        endpoints.push(
+          {
+            url: `https://aiplatform.googleapis.com/v1/publishers/google/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(serviceKey)}`,
+            useSystemField: true
+          },
+          {
+            url: `https://aiplatform.googleapis.com/v1beta1/publishers/google/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(serviceKey)}`,
+            useSystemField: true
+          },
+          {
+            url: `https://aiplatform.googleapis.com/v1/publishers/google/models/gemini-2.0-flash:generateContent?key=${encodeURIComponent(serviceKey)}`,
+            useSystemField: false
+          },
+          {
+            url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(serviceKey)}`,
+            useSystemField: true
+          }
+        );
+      }
+
+      // Fallback runtime lingkungan preview
+      endpoints.push(
+        {
+          url: "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=",
+          useSystemField: true
         },
-        generationConfig: {
-          temperature: 0.65,
-          maxOutputTokens: 8192
+        {
+          url: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=",
+          useSystemField: true
         }
-      };
+      );
 
       let lastError = null;
 
-      for (const apiKey of candidateKeys) {
-        const url = `${_GEMINI_ENDPOINT}?key=${encodeURIComponent(apiKey)}`;
-        const maxRetries = 3;
+      for (const target of endpoints) {
+        // Wajib menyertakan role: "user" agar kompatibel dengan Vertex AI & Gemini API
+        const payload = target.useSystemField
+          ? {
+              contents: [
+                {
+                  role: "user",
+                  parts: [{ text: userPrompt }]
+                }
+              ],
+              systemInstruction: {
+                parts: [{ text: systemInstruction }]
+              },
+              generationConfig: {
+                temperature: 0.65,
+                maxOutputTokens: 8192
+              }
+            }
+          : {
+              contents: [
+                {
+                  role: "user",
+                  parts: [{ text: `${systemInstruction}\n\n---\n\n${userPrompt}` }]
+                }
+              ],
+              generationConfig: {
+                temperature: 0.65,
+                maxOutputTokens: 8192
+              }
+            };
 
+        const maxRetries = 2;
         for (let attempt = 0; attempt < maxRetries; attempt++) {
           try {
-            const response = await fetch(url, {
+            const response = await fetch(target.url, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(payload)
             });
 
             if (!response.ok) {
-              // Jika key spesifik ditolak (400/401/403), segera pindah ke fallback key berikutnya
-              if ((response.status === 400 || response.status === 401 || response.status === 403) && apiKey !== "") {
-                lastError = new Error(`HTTP ${response.status}`);
+              const errText = await response.text().catch(() => "");
+              lastError = new Error(`Status ${response.status}: ${errText.slice(0, 140)}`);
+
+              // Jika status 400/401/403/404, langsung lanjut ke endpoint berikutnya tanpa menunggu retry
+              if ([400, 401, 403, 404].includes(response.status)) {
                 break;
               }
-              throw new Error(`HTTP ${response.status}`);
+              throw lastError;
             }
 
             const data = await response.json();
-            const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+            const parts = data?.candidates?.[0]?.content?.parts || [];
+            const rawText = parts.map((p) => p.text || "").join("\n").trim();
 
             if (!rawText) {
               throw new Error("Respons konten kosong dari server.");
@@ -1509,7 +1553,8 @@ ${specificPrompt}`;
         } else {
           document.getElementById("preview-document-wrapper").classList.remove("hidden");
         }
-        showToast("Terjadi gangguan koneksi saat menyusun perangkat ajar. Silakan coba klik Generate kembali.", "error");
+        const detail = error?.message ? ` (${error.message})` : "";
+        showToast(`Gagal menyusun perangkat ajar${detail}. Silakan periksa koneksi internet dan coba kembali.`, "error");
       } finally {
         setLoadingState(false);
       }
@@ -1663,6 +1708,27 @@ ${specificPrompt}`;
 
       setTimeout(() => URL.revokeObjectURL(downloadUrl), 1500);
       showToast(`Mengunduh file ${generatedFileName}...`, "success");
+    }
+
+    /**
+     * Inisialisasi Aplikasi Saat Halaman Selesai Dimuat
+     */
+    function initApp() {
+      loadIdentityFromStorage();
+      updateFaseOptions();
+      renderDimensiPills();
+      renderDynamicModuleOptions(currentModule);
+
+      document.querySelectorAll(".identity-field").forEach((el) => {
+        el.addEventListener("input", saveIdentityToStorage);
+        el.addEventListener("change", saveIdentityToStorage);
+      });
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", initApp);
+    } else {
+      initApp();
     }
   </script>
 </body>
